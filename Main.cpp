@@ -4,9 +4,9 @@
 #include "stdafx.h"
 #include <iostream>
 #include <string>
-#include "TestSet.h"
+#include "tests/TestSet.h"
 
-#include "TestEntities.h"
+#include "tests/TestEntities.h"
 
 using namespace OAuth2;
 using namespace OAuth2::Test;

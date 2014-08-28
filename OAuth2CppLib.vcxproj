@@ -83,31 +83,31 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AuthCodeFlowTest.h" />
+    <ClInclude Include="tests/AuthCodeFlowTest.h" />
     <ClInclude Include="AuthorizationCodeGrant.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="Interfaces.h" />
-    <ClInclude Include="Mocks.h" />
+    <ClInclude Include="tests/Mocks.h" />
     <ClInclude Include="OAuth2.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="TestEntities.h" />
-    <ClInclude Include="TestSet.h" />
-    <ClInclude Include="TestUtilities.h" />
+    <ClInclude Include="tests/TestEntities.h" />
+    <ClInclude Include="tests/TestSet.h" />
+    <ClInclude Include="tests/TestUtilities.h" />
     <ClInclude Include="Types.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AuthCodeFlowTest.cpp" />
+    <ClCompile Include="tests/AuthCodeFlowTest.cpp" />
     <ClCompile Include="AuthorizationCodeGrant.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Mocks.cpp" />
+    <ClCompile Include="tests/Mocks.cpp" />
     <ClCompile Include="OAuth2.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="TestEntities.cpp" />
-    <ClCompile Include="TestSet.cpp" />
+    <ClCompile Include="tests/TestEntities.cpp" />
+    <ClCompile Include="tests/TestSet.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />

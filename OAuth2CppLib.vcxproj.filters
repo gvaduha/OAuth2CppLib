@@ -5,16 +5,16 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="OAuth2.cpp" />
     <ClCompile Include="stdafx.cpp" />
-    <ClCompile Include="TestSet.cpp">
+    <ClCompile Include="tests/TestEntities.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
-    <ClCompile Include="TestEntities.cpp">
+    <ClCompile Include="tests/TestSet.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
-    <ClCompile Include="Mocks.cpp">
+    <ClCompile Include="tests/Mocks.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
-    <ClCompile Include="AuthCodeFlowTest.cpp">
+    <ClCompile Include="tests/AuthCodeFlowTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
   </ItemGroup>
@@ -26,19 +26,19 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Types.h" />
-    <ClInclude Include="TestSet.h">
+    <ClInclude Include="tests/TestSet.h">
       <Filter>Tests</Filter>
     </ClInclude>
-    <ClInclude Include="TestEntities.h">
+    <ClInclude Include="tests/TestEntities.h">
       <Filter>Tests</Filter>
     </ClInclude>
-    <ClInclude Include="TestUtilities.h">
+    <ClInclude Include="tests/TestUtilities.h">
       <Filter>Tests</Filter>
     </ClInclude>
-    <ClInclude Include="Mocks.h">
+    <ClInclude Include="tests/Mocks.h">
       <Filter>Tests</Filter>
     </ClInclude>
-    <ClInclude Include="AuthCodeFlowTest.h">
+    <ClInclude Include="tests/AuthCodeFlowTest.h">
       <Filter>Tests</Filter>
     </ClInclude>
   </ItemGroup>

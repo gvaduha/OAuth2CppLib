@@ -1,7 +1,6 @@
 ﻿#pragma once
-#include "Types.h"
-#include "Entities.h"
-#include "Interfaces.h"
+#include "../Types.h"
+#include "../Interfaces.h"
 
 namespace OAuth2
 {
