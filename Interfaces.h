@@ -7,9 +7,6 @@ namespace OAuth2
 class IHTTPRequest
 {
 public:
-    typedef std::map<StringType,StringType> MapType;
-
-    virtual MapType getHeaders() const = 0;
     virtual bool isHeaderExist(const StringType &name) const = 0;
     virtual StringType getHeader(const StringType &name) const = 0;
     virtual StringType getURI() const = 0;
@@ -132,33 +129,26 @@ public:
 };
 
 
-
+// TODEL?????????????????????????
 class ReqRespMockSHIII : public IHTTPResponse
 {
 private:
-    IHTTPRequest::MapType _headers;
+    typedef std::map<StringType, StringType> MapType;
+    MapType _headers;
     StringType _uri;
 
 public:
-    virtual IHTTPRequest::MapType getHeaders() const
-    {
-        return _headers;
-    };
-    virtual StringType getURI() const
-    {
-        return _uri;
-    };
-    virtual void addHeader(IHTTPRequest::MapType::key_type const &name, IHTTPRequest::MapType::value_type const &value)
+    virtual void addHeader(MapType::key_type const &name, MapType::value_type const &value)
     {
         //::lock();
         _headers["name"] = "value";
     };
-    virtual const StringType& setURI(StringType const &uri, IHTTPRequest::MapType const &query)
+    virtual const StringType& setURI(const StringType &uri, MapType const &query)
     {
         StringType tmp;
 
         //No encode or decode!
-        for(IHTTPRequest::MapType::const_iterator it = query.begin(); it != query.end(); ++it)
+        for(MapType::const_iterator it = query.begin(); it != query.end(); ++it)
         {
             tmp += it->first + "=" + it->second;
         };

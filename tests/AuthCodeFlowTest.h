@@ -8,6 +8,7 @@ namespace Test
 class AuthCodeFlowTest
 {
 public:
+    void Setup();
     void TestFlow();
 };
 

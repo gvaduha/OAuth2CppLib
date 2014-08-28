@@ -7,6 +7,7 @@
 #include "tests/TestSet.h"
 
 #include "tests/TestEntities.h"
+#include "tests/AuthCodeFlowTest.h"
 
 using namespace OAuth2;
 using namespace OAuth2::Test;
@@ -75,6 +76,8 @@ int _tmain(int argc, _TCHAR* argv[])
 void test_run()
 {
     TestEntities().TestAllToken();
+
+    AuthCodeFlowTest().TestFlow();
 
     //AuthorizationCodeGrantTest acgtest;
     //acgtest.setup();

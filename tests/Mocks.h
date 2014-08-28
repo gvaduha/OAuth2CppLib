@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "../Types.h"
 #include "../Interfaces.h"
+#include <map>
 
 namespace OAuth2
 {
@@ -54,7 +55,10 @@ struct ApplicationMock
 
 class HTTPRequestMock : public IHTTPRequest
 {
-    MapType _headers;
+public:
+    typedef std::map<std::string,std::string> MapType;
+private:
+    mutable MapType _headers; //since op[] change map
     StringType _uri;
 
 public:
@@ -77,7 +81,7 @@ public:
     };
     virtual StringType getHeader(const StringType &name) const
     {
-        return _headers.find(name)->second;
+        return _headers[name];
     };
 };
 

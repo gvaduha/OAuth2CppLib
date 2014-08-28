@@ -19,7 +19,7 @@ public:
 
     virtual bool CanProcessRequest(const IHTTPRequest &request) const
     {
-        return request.getHeaders()["type"] == "code";
+        return request.getHeader("response_type") == "code";
     };
 
     virtual SharedPtr<IHTTPResponse>::Type ProcessRequest(const IHTTPRequest &request);
@@ -38,7 +38,7 @@ public:
 
     virtual bool CanProcessRequest(const IHTTPRequest & request) const
     {
-        return request.getHeaders()["type"] == "token";
+        return request.getHeader("grant_type") == "authorization_code";
     };
 
     virtual SharedPtr<IHTTPResponse>::Type ProcessRequest(const IHTTPRequest& request) const
@@ -47,7 +47,7 @@ public:
 
         if (cid.empty()) return make_error_response(Errors::unauthorized_client, "", request);
 
-        
+        /////////////////////////////////////////////////////////////////////////
         //Create Token, Save Token, makeTokenResponse(...)
         exit(666);
     };
