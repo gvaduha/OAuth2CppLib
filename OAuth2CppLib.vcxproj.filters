@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="AuthorizationCodeGrant.cpp" />
+    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="OAuth2.cpp" />
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="TestSet.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="TestEntities.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="Mocks.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="AuthCodeFlowTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AuthorizationCodeGrant.h" />
+    <ClInclude Include="Constants.h" />
+    <ClInclude Include="Interfaces.h" />
+    <ClInclude Include="OAuth2.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="Types.h" />
+    <ClInclude Include="TestSet.h">
+      <Filter>Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="TestEntities.h">
+      <Filter>Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="TestUtilities.h">
+      <Filter>Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="Mocks.h">
+      <Filter>Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="AuthCodeFlowTest.h">
+      <Filter>Tests</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".gitignore" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Tests">
+      <UniqueIdentifier>{dfe4e138-703e-4aae-8f04-557b482a86b2}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
