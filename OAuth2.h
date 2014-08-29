@@ -32,21 +32,8 @@ public:
 };
 
 ///****************** UNCHARTED
-SharedPtr<IHTTPResponse>::Type make_error_response(Errors::Type error, const StringType &msg, const IHTTPRequest &request);
+SharedPtr<IHTTPResponse>::Type make_error_response(const Errors::Type &error, const StringType &msg, const IHTTPRequest &request);
 ///****************** UNCHARTED
-
-
-class AS
-{
-public:
-    void IHTTPResponse (const IHTTPRequest &request) const
-    {
-        /*
-        if (filter) process
-        */
-        exit(666);
-    };
-};
 
 // Holder of all services required to process messages
 class ServiceLocator
@@ -54,34 +41,36 @@ class ServiceLocator
 public:
     struct ServiceList
     {
-        SharedPtr<IUserAuthenticationFacade>::Type userAuthN;
-        SharedPtr<IClientAuthorizationFacade>::Type clientAuthZ;
-        SharedPtr<IClientAuthenticationFacade>::Type clientAuthN;
-        SharedPtr<IAuthCodeStorage>::Type authCodeGen;
-        SharedPtr<IScopeStorage>::Type scopeStorage;
-        SharedPtr<IClientStorage>::Type clientStorage;
-        SharedPtr<IHttpResponseFactory>::Type httpResponseFactory;
-        //typename SharedPtr<ITokenFactory<typename TToken> >::Type tokenFactory;
+        SharedPtr<IUserAuthenticationFacade>::Type UserAuthN;
+        SharedPtr<IClientAuthorizationFacade>::Type ClientAuthZ;
+        SharedPtr<IClientAuthenticationFacade>::Type ClientAuthN;
+        SharedPtr<IAuthCodeStorage>::Type AuthCodeGen;
+        SharedPtr<IScopeStorage>::Type ScopeStorage;
+        SharedPtr<IClientStorage>::Type ClientStorage;
+        SharedPtr<IHttpResponseFactory>::Type HttpResponseFactory;
+        //typename SharedPtr<ITokenFactory<typename TToken> >::Type TokenFactory;
     };
 
 private:
-    ServiceList _impl;
+    static SharedPtr<ServiceList>::Type _impl;
 
 public:
-    ServiceLocator(ServiceList services)
-        :_impl(services)
-    {};
+    static const ServiceList & instance()
+    {
+        if (!_impl)
+            throw AuthorizationException("Service locator for AS not initialized. Call init first.");
 
-    const SharedPtr<IUserAuthenticationFacade>::Type UserAuthN() const {return _impl.userAuthN;};
-    const SharedPtr<IClientAuthorizationFacade>::Type ClientAuthZ() const {return _impl.clientAuthZ;};
-    const SharedPtr<IClientAuthenticationFacade>::Type ClientAuthN() const {return _impl.clientAuthN;};
-    const SharedPtr<IAuthCodeStorage>::Type AuthCodeGen() const {return _impl.authCodeGen;};
-    const SharedPtr<IScopeStorage>::Type ScopeStorage() const {return _impl.scopeStorage;};
-    const SharedPtr<IClientStorage>::Type ClientStorage() const {return _impl.clientStorage;};
-    const SharedPtr<IHttpResponseFactory>::Type HttpResponseFactory() const {return _impl.httpResponseFactory;};
-    //const SharedPtr<ITokenFactory<typename TToken> > ::Type TokenFactory() {return _impl.tokenFactory;};
+        return *_impl;
+    };
+
+    //  Init must be called before any access to Instance. SharedPtr should guarantee atomic operation.
+    static void init(SharedPtr<ServiceList>::Type services)
+    {
+        _impl = services;
+    };
 
 private:
+    ServiceLocator();
     ServiceLocator & operator=(const ServiceLocator &);
     ServiceLocator(const ServiceLocator &);
 };
@@ -92,68 +81,42 @@ class IRequestFilter
 {
 public:
     // Decide whether filter can process request
-    virtual bool CanProcessRequest(const IHTTPRequest &request) const = 0; //NO_THROW
+    virtual bool canProcessRequest(const IHTTPRequest &request) const = 0; //NO_THROW
     // Process request and reply with http response
-    virtual SharedPtr<IHTTPResponse>::Type ProcessRequest(const IHTTPRequest &request) = 0; //NO_THROW
+    virtual SharedPtr<IHTTPResponse>::Type processRequest(const IHTTPRequest &request) = 0; //NO_THROW
 
     virtual ~IRequestFilter() {};
-    IRequestFilter(SharedPtr<ServiceLocator>::Type services)
-        : _services(services)
-    {};
-protected:
-    SharedPtr<ServiceLocator>::Type _services;
 };
-
-// Filter all request, reply as unsupported_response_type. Should be last in filter queue
-struct ProcessAsUnsupportedTypeRequestFilter : public IRequestFilter
-{
-    virtual bool CanProcessRequest(const IHTTPRequest &request) const
-    {
-        return true;
-    };
-
-    virtual SharedPtr<IHTTPResponse>::Type ProcessRequest(const IHTTPRequest &request) const
-    {
-        return make_error_response(Errors::unsupported_response_type,"",request);
-    };
-};
-
-
-
-
 
 // OAuth2 Authorization server implementation
 // Process request through queue of RequestProcessingUnit 
 // selecting first appropriate (RequestProcessingUnit.filter match)
-//class AuthorizationServer
-//{
-//public:
-//        typedef vector<RequestProcessingUnit> RequestFilterQueueType;
-//        typedef SharedPtr<IHTTPRequest>::Type (*PreprocessFuncPtr)(IHTTPRequest &);
-//        typedef SharedPtr<IHTTPResponse>::Type (*PostprocessFuncPtr)(IHTTPResponse &);
-//
-//private:
-//    SharedPtr<RequestFilterQueueType>::Type _request_filters;
-//    SharedPtr<ExternalServiceProviders>::Type _service_providers;
-//    PreprocessFuncPtr _preprocess_func;
-//    PostprocessFuncPtr _postprocess_func;
-//
-//    struct request_can_be_processed_lambda : unary_function<RequestProcessingUnit, bool>
-//    {
-//        request_can_be_processed_lambda(const IHTTPRequest &request)
-//            : _request(request)
-//        {};
-//
-//        bool operator()(RequestProcessingUnit unit) const { return unit.Filter()(_request); }
-//
-//    private:
-//        const IHTTPRequest& _request;
-//    };
-//
-//public:
-//    AuthorizationServer(ExternalServiceProviders *service_providers, RequestFilterQueueType *request_filters);
-//
-//    SharedPtr<IHTTPResponse>::Type ProcessRequest(IHTTPRequest const &request);
-//};
+class AuthorizationServer
+{
+public:
+    typedef std::vector<SharedPtr<IRequestFilter>::Type> RequestFilterQueueType;
+        typedef SharedPtr<IHTTPRequest>::Type (*PreprocessFuncPtr)(IHTTPRequest &);
+        typedef SharedPtr<IHTTPResponse>::Type (*PostprocessFuncPtr)(IHTTPResponse &);
+
+private:
+    SharedPtr<RequestFilterQueueType>::Type _request_filters;
+
+    struct request_can_be_processed_lambda : std::unary_function<IRequestFilter, bool>
+    {
+        request_can_be_processed_lambda(const IHTTPRequest &request)
+            : _request(request)
+        {};
+
+        bool operator()(SharedPtr<IRequestFilter>::Type filter) const { return filter->canProcessRequest(_request); }
+
+    private:
+        const IHTTPRequest& _request;
+    };
+
+public:
+    AuthorizationServer(SharedPtr<RequestFilterQueueType>::Type request_filters);
+
+    SharedPtr<IHTTPResponse>::Type processRequest(IHTTPRequest const &request);
+};
 
 }; //namespace OAuth2

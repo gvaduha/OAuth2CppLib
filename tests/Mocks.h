@@ -53,37 +53,45 @@ struct ApplicationMock
 };
 
 
-class HTTPRequestMock : public IHTTPRequest
+class HTTPRequestResponseMock : public IHTTPRequest, public IHTTPResponse
 {
 public:
     typedef std::map<std::string,std::string> MapType;
+
 private:
     mutable MapType _headers; //since op[] change map
+    mutable MapType _params; //since op[] change map
     StringType _uri;
+    StringType _body;
+    HttpCodeType _code;
 
 public:
-    HTTPRequestMock(const MapType& headers)
-    {
-        _headers = headers;
-    };
+    HTTPRequestResponseMock() {};
+    HTTPRequestResponseMock(const MapType& headers) { _params = headers; };
+    MapType getHeaders() const { return _params; };
 
-    virtual MapType getHeaders() const
-    {
-        return _headers;
-    };
-    virtual StringType getURI() const
-    {
-        return _uri;
-    };
-    virtual bool isHeaderExist(const StringType &name) const
-    {
-        return _headers.find(name) != _headers.end();
-    };
-    virtual StringType getHeader(const StringType &name) const
-    {
-        return _headers[name];
-    };
+    //Request
+    virtual bool isHeaderExist(const StringType &name) const { return _headers.find(name) != _headers.end(); };
+    virtual StringType getHeader(const StringType &name) const  { return _headers[name]; };
+    virtual bool isParamExist(const StringType &name) const { return _params.find(name) != _params.end(); };
+    virtual StringType getParam(const StringType &name) const  { return _params[name]; };
+    virtual StringType getURI() const { return _uri; };
+    virtual StringType const & getBody() const {return _body;};
+    virtual HttpCodeType getCode() const {return _code;};
+
+    //Response
+    virtual void addHeader(StringType const &name, StringType const &value) {_headers[name]=value;};
+    virtual void addParam(const StringType &name, const StringType &value) {_params[name]=value;};
+    virtual void setURI(StringType const &uri) {_uri =uri;};
+    virtual void setBody(StringType const &body) {_body = body;};
+    virtual void setCode(HttpCodeType code) {_code = code;};
 };
 
+class HttpResponseFactoryMock : public IHttpResponseFactory
+{
+public:
+    virtual SharedPtr<IHTTPResponse>::Type Create() const {return SharedPtr<IHTTPResponse>::Type(new HTTPRequestResponseMock());};
 };
-};
+
+}; //namespace Test
+}; //namespace OAuth2

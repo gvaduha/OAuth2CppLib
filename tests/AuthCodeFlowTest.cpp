@@ -19,21 +19,23 @@ void AuthCodeFlowTest::Setup(void)
 
 void AuthCodeFlowTest::TestFlow(void)
 {
-    ServiceLocator::ServiceList list;
-    //list.authCodeGen
+    SharedPtr<ServiceLocator::ServiceList>::Type list(new ServiceLocator::ServiceList());
+    list->HttpResponseFactory = SharedPtr<HttpResponseFactoryMock>::Type(new HttpResponseFactoryMock());
 
-    SharedPtr<ServiceLocator>::Type sl(new ServiceLocator(list));
-    CodeRequestFilter crf(sl);
+    ServiceLocator::init(list);
 
-    assert(!crf.CanProcessRequest(*_samples.Empty));
-    assert(!crf.CanProcessRequest(*_samples.Bad1));
-    assert(crf.CanProcessRequest(*_samples.Good1));
+    CodeRequestFilter crf;
 
-    SharedPtr<IHTTPResponse>::Type response = crf.ProcessRequest(*_samples.Empty);
+    assert(!crf.canProcessRequest(*_samples.Empty));
+    assert(!crf.canProcessRequest(*_samples.Bad1));
+    assert(crf.canProcessRequest(*_samples.Good1));
+
+    SharedPtr<IHTTPResponse>::Type response = crf.processRequest(*_samples.Empty);
     
-    //assert(response.BODY!!!);
+    HTTPRequestResponseMock* r = dynamic_cast<HTTPRequestResponseMock*>(response.get());
+    assert(r->getBody() == "{\"error\":\"invalid_request\"}");
 
-    //SharedPtr<IHTTPResponse>::Type response = crf.ProcessRequest(*_samples.Good1);
+    //SharedPtr<IHTTPResponse>::Type response = crf.ProcessRequest(*_samples.Good1, sl);
 }
 
 };// namespace Test

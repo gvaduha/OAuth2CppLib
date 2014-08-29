@@ -31,56 +31,54 @@ namespace AuthorizationCodeGrant
 //
 //   OAUTH_NAMED_STRING_CONST(kAuthzResponseType,"code");
 
-SharedPtr<IHTTPResponse>::Type CodeRequestFilter::ProcessRequest(const IHTTPRequest &request)
+SharedPtr<IHTTPResponse>::Type CodeRequestFilter::processRequest(const IHTTPRequest &request)
 {
     // validation
-    ClientIdType cid = request.getHeader("client_id");
+    ClientIdType cid = request.getParam("client_id");
     if (cid.empty()) 
         return make_error_response(Errors::invalid_request, "no client_id", request);
 
     // scope is OPTIONAL parameter by RFC
-    StringType scope = request.getHeader("scope");
+    StringType scope = request.getParam("scope");
     if (scope.empty()) 
-        scope = _services->ScopeStorage()->GetClientScope(cid);
+        scope = ServiceLocator::instance().ScopeStorage->GetClientScope(cid);
 
-    if (!_services->ScopeStorage()->IsScopeValid(scope))
+    if (!ServiceLocator::instance().ScopeStorage->IsScopeValid(scope))
         return make_error_response(Errors::invalid_scope, scope, request);
 
     // redirect_uri is OPTIONAL parameter by RFC
-    StringType uri = request.getHeader("redirect_uri");
-    if (!uri.empty() && !_services->ClientStorage()->IsRedirectUriValid(cid, uri))
+    StringType uri = request.getParam("redirect_uri");
+    if (!uri.empty() && !ServiceLocator::instance().ClientStorage->IsRedirectUriValid(cid, uri))
         return make_error_response(Errors::invalid_request, "no redirect_uri", request);
     else
-        uri = _services->ClientStorage()->GetRedirectUri(cid);
+        uri = ServiceLocator::instance().ClientStorage->GetRedirectUri(cid);
 
     // authenticate user and get his ID
-    UserIdType uid = _services->UserAuthN()->authenticateUser(request);
+    UserIdType uid = ServiceLocator::instance().UserAuthN->authenticateUser(request);
     if (uid.empty())
-        return _services->UserAuthN()->makeAuthenticationRequestPage(request);
+        return ServiceLocator::instance().UserAuthN->makeAuthenticationRequestPage(request);
 
     // check if application is authorized by user to perform operations on scope
-    bool authorized = _services->ClientAuthZ()->isClientAuthorizedByUser(uid, cid, scope);
+    bool authorized = ServiceLocator::instance().ClientAuthZ->isClientAuthorizedByUser(uid, cid, scope);
     if (!authorized)
-        return _services->ClientAuthZ()->makeAuthorizationRequestPage(uid, cid, scope);
+        return ServiceLocator::instance().ClientAuthZ->makeAuthorizationRequestPage(uid, cid, scope);
 
     // generate code and make response
-    AuthCodeType code = _services->AuthCodeGen()->GenerateCode(uid, cid);
+    AuthCodeType code = ServiceLocator::instance().AuthCodeGen->GenerateCode(uid, cid);
 
     return makeAuthCodeResponse(code, uri, request);
 };
 
 SharedPtr<IHTTPResponse>::Type CodeRequestFilter::makeAuthCodeResponse(const AuthCodeType &code, const StringType uri, const IHTTPRequest &request)
 {
-    SharedPtr<IHTTPResponse>::Type response = _services->HttpResponseFactory()->Create();
+    SharedPtr<IHTTPResponse>::Type response = ServiceLocator::instance().HttpResponseFactory->Create();
 
-    IHTTPResponse::MapType params;
+    if (request.isParamExist("state"))
+        response->addParam("state", request.getParam("state"));
 
-    if (request.isHeaderExist("state"))
-        params["state"] = request.getHeader("state");
+    response->addParam("code", code);
 
-    params["code"] = code;
-
-    response->setURI(uri+"?", params);
+    response->setURI(uri);
 
     return response;
 };

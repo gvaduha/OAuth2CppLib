@@ -15,19 +15,19 @@
 //void TestSetBaseClass::setup()
 //{
 //    IHTTPRequest::MapType headers;
-//    _empty_request.reset(new HTTPRequestMock(headers));
+//    _empty_request.reset(new HTTPRequestResponseMock(headers));
 //    
 //    headers[""] = "";
 //    headers["client_secret"] = "yyy";
-//    _bad1_request.reset(new HTTPRequestMock(headers));
+//    _bad1_request.reset(new HTTPRequestResponseMock(headers));
 //    
 //    headers["response_type"] = "xxx";
-//    _bad2_request.reset(new HTTPRequestMock(headers));
+//    _bad2_request.reset(new HTTPRequestResponseMock(headers));
 //
 //    headers["client_secret"] = client_secret_correct;
 //    headers["response_type"] = "code";
 //    headers["client_id"] = client_id_correct;
-//    _good_request.reset(new HTTPRequestMock(headers));
+//    _good_request.reset(new HTTPRequestResponseMock(headers));
 //
 //    _service_providers.reset(new ExternalServiceProviders(new ClientAuthenticatorMock(true)));
 //};
@@ -57,7 +57,7 @@
 //    headers["client_id"] = client_id_correct;
 //    headers["client_secret"] = client_secret_correct;
 //    headers["response_type"] = "code";
-//    _good_request.reset(new HTTPRequestMock(headers));
+//    _good_request.reset(new HTTPRequestResponseMock(headers));
 //}
 //
 //void AuthorizationCodeGrantTest::test_request_filter()
@@ -93,7 +93,7 @@
 //void DefaultRequestProcessingUnitTest::test_all()
 //{
 //    IHTTPRequest::MapType headers;
-//    HTTPRequestMock request(headers);
+//    HTTPRequestResponseMock request(headers);
 //    DefaultRequestProcessingUnit drpu;
 //
 //    assert(drpu.Filter()(request) == true);

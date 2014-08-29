@@ -11,18 +11,17 @@ namespace AuthorizationCodeGrant
 class CodeRequestFilter : public IRequestFilter
 {
 public:
-    CodeRequestFilter(SharedPtr<ServiceLocator>::Type services)
-        : IRequestFilter(services)
+    CodeRequestFilter()
     {};
 
     virtual ~CodeRequestFilter() {};
 
-    virtual bool CanProcessRequest(const IHTTPRequest &request) const
+    virtual bool canProcessRequest(const IHTTPRequest &request) const
     {
-        return request.getHeader("response_type") == "code";
+        return request.getParam("response_type") == "code";
     };
 
-    virtual SharedPtr<IHTTPResponse>::Type ProcessRequest(const IHTTPRequest &request);
+    virtual SharedPtr<IHTTPResponse>::Type processRequest(const IHTTPRequest &request);
 
 private:
     SharedPtr<IHTTPResponse>::Type makeAuthCodeResponse(const AuthCodeType &code, const StringType uri, const IHTTPRequest &request);
@@ -31,19 +30,17 @@ private:
 class TokenRequestFilter : public IRequestFilter
 {
 public:
-    TokenRequestFilter(SharedPtr<ServiceLocator>::Type services)
-        : IRequestFilter(services)
-    {};
+    TokenRequestFilter() {};
     virtual ~TokenRequestFilter() {};
 
-    virtual bool CanProcessRequest(const IHTTPRequest & request) const
+    virtual bool canProcessRequest(const IHTTPRequest & request) const
     {
-        return request.getHeader("grant_type") == "authorization_code";
+        return request.getParam("grant_type") == "authorization_code";
     };
 
-    virtual SharedPtr<IHTTPResponse>::Type ProcessRequest(const IHTTPRequest& request) const
+    virtual SharedPtr<IHTTPResponse>::Type processRequest(const IHTTPRequest& request) const
     {
-        ClientIdType cid = _services->ClientAuthN()->authenticateClient(request);
+        ClientIdType cid = ServiceLocator::instance().ClientAuthN->authenticateClient(request);
 
         if (cid.empty()) return make_error_response(Errors::unauthorized_client, "", request);
 

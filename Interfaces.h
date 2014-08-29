@@ -9,16 +9,20 @@ class IHTTPRequest
 public:
     virtual bool isHeaderExist(const StringType &name) const = 0;
     virtual StringType getHeader(const StringType &name) const = 0;
+    virtual bool isParamExist(const StringType &name) const = 0;
+    virtual StringType getParam(const StringType &name) const = 0;
     virtual StringType getURI() const = 0;
+    virtual StringType const & getBody() const = 0;
+    virtual HttpCodeType getCode() const = 0;
 };
 
-class IHTTPResponse// : public IHTTPRequest
+class IHTTPResponse
 {
 public:
-    typedef std::map<StringType,StringType> MapType;
-
-    virtual void addHeader(MapType::key_type const &name, MapType::value_type const &value) = 0;
-    virtual StringType const & setURI(StringType const &uri, MapType const &query) = 0;
+    virtual void addHeader(StringType const &name, StringType const &value) = 0;
+    virtual void addParam(const StringType &name, const StringType &value) = 0;
+    virtual void setURI(StringType const &uri) = 0;
+    virtual void setBody(StringType const &body) = 0;
     virtual void setCode(HttpCodeType code) = 0;
 };
 
