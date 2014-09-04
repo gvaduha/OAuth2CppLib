@@ -5,6 +5,7 @@
 #include "OAuth2.h"
 
 #include <algorithm>
+#include <sstream>
 #include <cassert>
 
 using namespace std;
@@ -47,5 +48,47 @@ SharedPtr<IHTTPResponse>::Type AuthorizationServer::processRequest(IHTTPRequest 
     return response;
 };
 // ***** AuthorizationServer end *****
+
+bool Client::isSubScope(StringType scope)
+{
+    if (scope.empty())
+        return false;
+
+    istringstream iss(scope);
+    vector<StringType> tokens;
+    copy(istream_iterator<StringType>(iss), istream_iterator<StringType>(), back_inserter(tokens));
+
+    for(vector<StringType>::const_iterator it = tokens.begin(); it != tokens.end(); ++it)
+        if (this->Scope.find(*it) == string::npos)
+            return false;
+
+    return true;
+};
+
+
+bool isEqualCaseInsensitive(StringType strFirst, StringType strSecond)
+{
+  // Convert both strings to upper case by transfrom() before compare.
+  transform(strFirst.begin(), strFirst.end(), strFirst.begin(), toupper);
+  transform(strSecond.begin(), strSecond.end(), strSecond.begin(), toupper);
+  if(strFirst == strSecond) return true; else return false;
+}
+
+// beware case!
+bool Client::isValidCallbackUri(StringType uri)
+{
+    if (uri.empty())
+        return false;
+
+    istringstream iss(this->Uris);
+    vector<StringType> tokens;
+    copy(istream_iterator<StringType>(iss), istream_iterator<StringType>(), back_inserter(tokens));
+
+    for(vector<StringType>::const_iterator it = tokens.begin(); it != tokens.end(); ++it)
+        if (isEqualCaseInsensitive(uri,*it))
+            return true;
+
+    return false;
+};
 
 }; //namespace OAuth2

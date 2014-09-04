@@ -45,11 +45,44 @@ protected:
     const StringType DecodeJWE(const StringType &jweToken) const;
 };
 
-struct ApplicationMock
+//class ApplicationStorageMock : public IClientStorage
+//{
+//private:
+//    std::map<ClientIdType, SP<Client> > _clients;
+//public:
+//    void insertApplication(SP<Client> client)
+//    {
+//        _clients[client->Id] = client;
+//    };
+//
+//    virtual bool IsRedirectUriValid(const ClientIdType &cid, const StringType &uri);
+//    virtual StringType & GetRedirectUri(const ClientIdType &cid);
+//};
+
+template<typename T>
+class MemoryStorageMock : public IStorage<T>
 {
-    ClientIdType Id;
-    StringType Secret;
-    StringType Uri;
+private:
+    std::map<ClientIdType,T> _storage;
+public:
+    T create(T o)
+    {
+        _storage[o->Id] = o;
+        return o;
+    };
+    T load(const IdType &id)
+    {
+        return _storage[id];
+    };
+    T update(T o)
+    {
+        return _storage[o->Id] = o;
+        return o;
+    };
+    void remove(const IdType &id)
+    {
+        throw std::logic_error("Not needed");
+    };
 };
 
 
@@ -63,6 +96,7 @@ private:
     mutable MapType _params; //since op[] change map
     StringType _uri;
     StringType _body;
+    StringType _verb;
     HttpCodeType _code;
 
 public:
@@ -71,10 +105,11 @@ public:
     MapType getHeaders() const { return _params; };
 
     //Request
+    virtual StringType getVerb() const { return _verb; }
     virtual bool isHeaderExist(const StringType &name) const { return _headers.find(name) != _headers.end(); };
     virtual StringType getHeader(const StringType &name) const  { return _headers[name]; };
     virtual bool isParamExist(const StringType &name) const { return _params.find(name) != _params.end(); };
-    virtual StringType getParam(const StringType &name) const  { return _params[name]; };
+    virtual StringType getParam(const StringType &name) const  { return _params[name]; }; //should switch by HTTP verb
     virtual StringType getURI() const { return _uri; };
     virtual StringType const & getBody() const {return _body;};
     virtual HttpCodeType getCode() const {return _code;};

@@ -1,4 +1,5 @@
 #pragma once
+#include "Constants.h"
 #include <vector>
 
 namespace OAuth2
@@ -35,44 +36,23 @@ public:
 SharedPtr<IHTTPResponse>::Type make_error_response(const Errors::Type &error, const StringType &msg, const IHTTPRequest &request);
 ///****************** UNCHARTED
 
-// Holder of all services required to process messages
-class ServiceLocator
+
+// Client class
+class Client
 {
 public:
-    struct ServiceList
+    ClientIdType Id;
+    StringType Secret;
+    StringType Uris;
+    StringType Scope;
+
+    virtual bool isEmpty()
     {
-        SharedPtr<IUserAuthenticationFacade>::Type UserAuthN;
-        SharedPtr<IClientAuthorizationFacade>::Type ClientAuthZ;
-        SharedPtr<IClientAuthenticationFacade>::Type ClientAuthN;
-        SharedPtr<IAuthCodeStorage>::Type AuthCodeGen;
-        SharedPtr<IScopeStorage>::Type ScopeStorage;
-        SharedPtr<IClientStorage>::Type ClientStorage;
-        SharedPtr<IHttpResponseFactory>::Type HttpResponseFactory;
-        //typename SharedPtr<ITokenFactory<typename TToken> >::Type TokenFactory;
-    };
+        return this->Id.empty();
+    }
 
-private:
-    static SharedPtr<ServiceList>::Type _impl;
-
-public:
-    static const ServiceList & instance()
-    {
-        if (!_impl)
-            throw AuthorizationException("Service locator for AS not initialized. Call init first.");
-
-        return *_impl;
-    };
-
-    //  Init must be called before any access to Instance. SharedPtr should guarantee atomic operation.
-    static void init(SharedPtr<ServiceList>::Type services)
-    {
-        _impl = services;
-    };
-
-private:
-    ServiceLocator();
-    ServiceLocator & operator=(const ServiceLocator &);
-    ServiceLocator(const ServiceLocator &);
+    virtual bool isSubScope(StringType scope);
+    virtual bool isValidCallbackUri(StringType uri);
 };
 
 
@@ -117,6 +97,45 @@ public:
     AuthorizationServer(SharedPtr<RequestFilterQueueType>::Type request_filters);
 
     SharedPtr<IHTTPResponse>::Type processRequest(IHTTPRequest const &request);
+};
+
+// Holder of all services required to process messages
+class ServiceLocator
+{
+public:
+    struct ServiceList
+    {
+        SharedPtr<IUserAuthenticationFacade>::Type UserAuthN;
+        SharedPtr<IClientAuthorizationFacade>::Type ClientAuthZ;
+        SharedPtr<IClientAuthenticationFacade>::Type ClientAuthN;
+        SharedPtr<IStorage<SharedPtr<StringType>::Type> >::Type AuthCodeGen;
+        SharedPtr<IStorage<SharedPtr<Client>::Type> >::Type ClientStorage;
+        SharedPtr<IHttpResponseFactory>::Type HttpResponseFactory;
+        //typename SharedPtr<ITokenFactory<typename TToken> >::Type TokenFactory;
+    };
+
+private:
+    static SharedPtr<ServiceList>::Type _impl;
+
+public:
+    static const ServiceList & instance()
+    {
+        if (!_impl)
+            throw AuthorizationException("Service locator for AS not initialized. Call init first.");
+
+        return *_impl;
+    };
+
+    //  Init must be called before any access to Instance. SharedPtr should guarantee atomic operation.
+    static void init(SharedPtr<ServiceList>::Type services)
+    {
+        _impl = services;
+    };
+
+private:
+    ServiceLocator();
+    ServiceLocator & operator=(const ServiceLocator &);
+    ServiceLocator(const ServiceLocator &);
 };
 
 }; //namespace OAuth2

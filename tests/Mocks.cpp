@@ -45,5 +45,6 @@ const StringType TokenFactoryMock::DecodeJWE(const StringType &jweToken) const
     return jweToken;
 };
 
+
 };// namespace Test
 };// namespace OAuth2

@@ -32,6 +32,7 @@ struct RequestSamples
         headers["client_secret"] = client_secret_correct;
         headers["response_type"] = "code";
         headers["client_id"] = client_id_correct;
+        headers["scope"] = "email basic";
         Good1.reset(new HTTPRequestResponseMock(headers));
     };
 

@@ -1,6 +1,7 @@
 #pragma once
 #include "TestUtilities.h"
 #include "Mocks.h"
+#include "../OAuth2.h"
 
 namespace OAuth2
 {
@@ -30,6 +31,26 @@ public:
         assert(t2->IsNullToken());
         assert(!t->IsNullToken());
     };
+
+    void TestAllClient()
+    {
+        Client c; c.Id = "012345"; c.Scope = "basic email xxx"; c.Secret = "Secret"; c.Uris = "http://localhost/oauth/  http://localhost/o/";
+
+        assert(!c.isSubScope(""));
+        assert(!c.isSubScope("myscope"));
+        assert(!c.isSubScope("xxx abc"));
+
+        assert(c.isSubScope("xxx"));
+        assert(c.isSubScope("basic xxx"));
+        assert(c.isSubScope("email  basic   xxx"));
+
+        assert(!c.isValidCallbackUri("http://localhost/oauth"));
+        assert(!c.isValidCallbackUri("http://localhost/oauth/a"));
+        assert(!c.isValidCallbackUri("http://localhost/o"));
+
+        assert(c.isValidCallbackUri("http://localhost/oauth/"));
+        assert(c.isValidCallbackUri("http://localhost/o/"));
+    }
 };
 
 }; //namespace Test

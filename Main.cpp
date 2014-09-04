@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <string>
-#include "tests/TestSet.h"
 
 #include "tests/TestEntities.h"
 #include "tests/AuthCodeFlowTest.h"
@@ -74,21 +73,10 @@ int main()
 
 void test_run()
 {
-    TestEntities().TestAllToken();
+    TestEntities te;
+    te.TestAllToken();
+    te.TestAllClient();
 
     AuthCodeFlowTest().TestFlow();
 
-    //AuthorizationCodeGrantTest acgtest;
-    //acgtest.setup();
-    //acgtest.test_request_filter();
-    //acgtest.test_request_validator();
-    //acgtest.test_request_processor();
-
-    //DefaultRequestProcessingUnitTest drputest;
-    //drputest.setup();
-    //drputest.test_all();
-
-    //DefaultFunctionSetTest dfstest;
-    //dfstest.setup();
-    //dfstest.test_request_parameters_authn_func();
 };

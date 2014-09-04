@@ -7,6 +7,7 @@ namespace OAuth2
 class IHTTPRequest
 {
 public:
+    virtual StringType getVerb() const = 0;
     virtual bool isHeaderExist(const StringType &name) const = 0;
     virtual StringType getHeader(const StringType &name) const = 0;
     virtual bool isParamExist(const StringType &name) const = 0;
@@ -106,64 +107,15 @@ public:
     virtual ~IClientAuthorizationFacade() = 0;
 };
 
-// Storage for Authorization Codes as defined in RFC6749
-class IAuthCodeStorage
+template<typename T>
+class IStorage
 {
 public:
-    //Save in DB???
-    virtual const AuthCodeType & GenerateCode(const UserIdType &userId, const ClientIdType &clientId) = 0; //NO_THROW
-    //Delet from DB??
-    virtual bool IsCodeValid(const AuthCodeType code);
+    virtual T create(T o) = 0;
+    virtual T load(const IdType &id) = 0;
+    virtual T update(T o) = 0;
+    virtual void remove(const IdType &id) = 0;
 };
-
-// Storage for API scope definitions
-class IScopeStorage
-{
-public:
-    virtual StringType & GetClientScope(const ClientIdType &cid) const = 0;
-    virtual bool IsScopeValid(const StringType &scope) const = 0;
-};
-
-// Storage for Registered ыClients
-class IClientStorage
-{
-public:
-    virtual bool IsRedirectUriValid(const ClientIdType &cid, const StringType &uri) const = 0;
-    virtual StringType & GetRedirectUri(const ClientIdType &cid) const = 0;
-};
-
-
-// TODEL?????????????????????????
-class ReqRespMockSHIII : public IHTTPResponse
-{
-private:
-    typedef std::map<StringType, StringType> MapType;
-    MapType _headers;
-    StringType _uri;
-
-public:
-    virtual void addHeader(MapType::key_type const &name, MapType::value_type const &value)
-    {
-        //::lock();
-        _headers["name"] = "value";
-    };
-    virtual const StringType& setURI(const StringType &uri, MapType const &query)
-    {
-        StringType tmp;
-
-        //No encode or decode!
-        for(MapType::const_iterator it = query.begin(); it != query.end(); ++it)
-        {
-            tmp += it->first + "=" + it->second;
-        };
-
-        //lock
-        _uri = uri + "?" + tmp;
-
-        return uri;
-    };
-};
-
 
 // TODEL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //// MUST BE REDONE 4 DIFFERENT TYPE OF AUTH REQUEST (MAC?)
@@ -171,13 +123,5 @@ struct IClientAuthenticator
 {
     virtual bool Authenticate(StringType const &name, StringType const &password) const = 0;
 };
-//
-//struct Application;
-//
-//// Storage for all OAuth2 entities
-//struct IEntityStore
-//{
-//    virtual auto_ptr<Application> GetApplicationById(IdType id) = 0;
-//};
 
 }; //namespace OAuth2

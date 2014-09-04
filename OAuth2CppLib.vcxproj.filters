@@ -7,13 +7,10 @@
     <ClCompile Include="tests/TestEntities.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
-    <ClCompile Include="tests/TestSet.cpp">
-      <Filter>Tests</Filter>
-    </ClCompile>
     <ClCompile Include="tests/Mocks.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
-    <ClCompile Include="tests/AuthCodeFlowTest.cpp">
+    <ClCompile Include="tests\AuthCodeFlowTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
   </ItemGroup>
@@ -23,9 +20,6 @@
     <ClInclude Include="Interfaces.h" />
     <ClInclude Include="OAuth2.h" />
     <ClInclude Include="Types.h" />
-    <ClInclude Include="tests/TestSet.h">
-      <Filter>Tests</Filter>
-    </ClInclude>
     <ClInclude Include="tests/TestEntities.h">
       <Filter>Tests</Filter>
     </ClInclude>
@@ -35,10 +29,10 @@
     <ClInclude Include="tests/Mocks.h">
       <Filter>Tests</Filter>
     </ClInclude>
-    <ClInclude Include="tests/AuthCodeFlowTest.h">
+    <ClInclude Include="tests/RequestSamples.h">
       <Filter>Tests</Filter>
     </ClInclude>
-    <ClInclude Include="tests/RequestSamples.h">
+    <ClInclude Include="tests\AuthCodeFlowTest.h">
       <Filter>Tests</Filter>
     </ClInclude>
   </ItemGroup>
