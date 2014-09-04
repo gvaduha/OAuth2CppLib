@@ -1,7 +1,6 @@
 // ConsoleApplication1.cpp : Defines the entry point for the console application.
 //
 
-#include "stdafx.h"
 #include <iostream>
 #include <string>
 #include "tests/TestSet.h"
@@ -62,7 +61,7 @@ class RFC_values_for_grant_types
 void test_run();
 
 
-int _tmain(int argc, _TCHAR* argv[])
+int main()
 {
 
 

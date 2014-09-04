@@ -39,13 +39,13 @@ class ITokenFactory
 public:
     const typename SharedPtr<T>::Type NewToken(const UserIdType &uid, const ClientIdType &cid, const StringType &scope)
     {
-        SharedPtr<T>::Type t(new T());
+        typename SharedPtr<T>::Type t(new T());
         NewToken_Impl(t, uid, cid, scope);
         return t;
     };
-    const typename SharedPtr<typename T>::Type FromJWT(const StringType &jwtToken) const
+    const typename SharedPtr<T>::Type FromJWT(const StringType &jwtToken) const
     {
-        SharedPtr<T>::Type t(new T());
+        typename SharedPtr<T>::Type t(new T());
         FromJWT_Impl(t, jwtToken);
         return t;
     };

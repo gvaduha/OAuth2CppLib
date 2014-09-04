@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "TestUtilities.h"
 #include "AuthCodeFlowTest.h"
 #include "../AuthorizationCodeGrant.h"

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Constants.h"
 #include "Interfaces.h"
 #include "OAuth2.h"

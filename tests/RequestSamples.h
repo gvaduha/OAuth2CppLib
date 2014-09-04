@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Mocks.h"
 
 namespace OAuth2

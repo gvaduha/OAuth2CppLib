@@ -1,5 +1,4 @@
 ﻿#pragma once
-#include "stdafx.h"
 #include "Types.h"
 #include "Constants.h"
 #include "Interfaces.h"

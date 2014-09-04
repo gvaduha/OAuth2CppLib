@@ -1,5 +1,4 @@
-﻿#include "stdafx.h"
-#include "Mocks.h"
+﻿#include "Mocks.h"
 
 #include <vector>
 #include <iostream>

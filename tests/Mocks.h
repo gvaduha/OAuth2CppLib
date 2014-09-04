@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "../Types.h"
 #include "../Interfaces.h"
 #include <map>
@@ -33,7 +33,7 @@ private:
     TokenMock() {};
     //TokenMock(const TokenMock &rhs);
     //TokenMock & operator=(const TokenMock &rhs);
-    template<typename U> friend class ITokenFactory;
+    friend class ITokenFactory<TokenMock>;
 };
 
 class TokenFactoryMock : public ITokenFactory<TokenMock>

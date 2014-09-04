@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "TestEntities.h"
 
 namespace OAuth2

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Types.h"
 
 #define OAUTH_STRING_CONST(NAME) static const StringType NAME(#NAME);

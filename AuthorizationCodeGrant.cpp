@@ -1,5 +1,4 @@
-﻿#include "stdafx.h"
-//#include "Types.h"
+﻿//#include "Types.h"
 //#include "Constants.h"
 //#include "Interfaces.h"
 //#include "OAuth2.h"
