@@ -32,24 +32,27 @@ public:
         assert(!t->IsNullToken());
     };
 
-    void TestAllClient()
+    void TestAllStandardAuthorizationServerPolicies()
     {
-        Client c; c.Id = "012345"; c.Scope = "basic email xxx"; c.Secret = "Secret"; c.Uris = "http://localhost/oauth/  http://localhost/o/";
+        Client c; c.Id = "012345"; c.Scope = "basic email xxx"; c.Secret = "Secret"; c.RedirectUri = "http://localhost/oauth/  http://localhost/o/";
+        StandardAuthorizationServerPolicies p;
 
-        assert(!c.isSubScope(""));
-        assert(!c.isSubScope("myscope"));
-        assert(!c.isSubScope("xxx abc"));
+        assert(!p.isScopeValid(c, ""));
+        assert(!p.isScopeValid(c, "myscope"));
+        assert(!p.isScopeValid(c, "xxx abc"));
 
-        assert(c.isSubScope("xxx"));
-        assert(c.isSubScope("basic xxx"));
-        assert(c.isSubScope("email  basic   xxx"));
+        assert(p.isScopeValid(c, "xxx"));
+        assert(p.isScopeValid(c, "basic xxx"));
+        assert(p.isScopeValid(c, "email  basic   xxx"));
 
-        assert(!c.isValidCallbackUri("http://localhost/oauth"));
-        assert(!c.isValidCallbackUri("http://localhost/oauth/a"));
-        assert(!c.isValidCallbackUri("http://localhost/o"));
+        assert(!p.isValidCallbackUri(c, "http://localhost/oauth"));
+        assert(!p.isValidCallbackUri(c, "http://localhost/oauth/a"));
+        assert(!p.isValidCallbackUri(c, "http://localhost/o"));
 
-        assert(c.isValidCallbackUri("http://localhost/oauth/"));
-        assert(c.isValidCallbackUri("http://localhost/o/"));
+        assert(p.isValidCallbackUri(c, "http://localhost/oauth/"));
+        assert(p.isValidCallbackUri(c, "http://localhost/o/"));
+
+        assert(p.getCallbackUri(c) == "http://localhost/oauth/");
     }
 };
 

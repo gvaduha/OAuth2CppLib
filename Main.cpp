@@ -75,7 +75,7 @@ void test_run()
 {
     TestEntities te;
     te.TestAllToken();
-    te.TestAllClient();
+    te.TestAllStandardAuthorizationServerPolicies();
 
     AuthCodeFlowTest().TestFlow();
 

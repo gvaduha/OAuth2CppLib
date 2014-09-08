@@ -49,46 +49,54 @@ SharedPtr<IHTTPResponse>::Type AuthorizationServer::processRequest(IHTTPRequest 
 };
 // ***** AuthorizationServer end *****
 
-bool Client::isSubScope(StringType scope)
+
+// ***** StandardAuthorizationServerPolicies start *****
+size_t tokenizeString(const StringType &in, vector<StringType> &out)
+{
+    istringstream iss(in);
+    copy(istream_iterator<StringType>(iss), istream_iterator<StringType>(), back_inserter(out));
+
+    return out.size();
+};
+
+bool StandardAuthorizationServerPolicies::isScopeValid(const Client &client, const StringType &scope) const
 {
     if (scope.empty())
         return false;
 
-    istringstream iss(scope);
     vector<StringType> tokens;
-    copy(istream_iterator<StringType>(iss), istream_iterator<StringType>(), back_inserter(tokens));
+    tokenizeString(scope, tokens);
 
     for(vector<StringType>::const_iterator it = tokens.begin(); it != tokens.end(); ++it)
-        if (this->Scope.find(*it) == string::npos)
+        if (client.Scope.find(*it) == string::npos)
             return false;
 
     return true;
 };
 
 
-bool isEqualCaseInsensitive(StringType strFirst, StringType strSecond)
-{
-  // Convert both strings to upper case by transfrom() before compare.
-  transform(strFirst.begin(), strFirst.end(), strFirst.begin(), toupper);
-  transform(strSecond.begin(), strSecond.end(), strSecond.begin(), toupper);
-  if(strFirst == strSecond) return true; else return false;
-}
-
-// beware case!
-bool Client::isValidCallbackUri(StringType uri)
+bool StandardAuthorizationServerPolicies::isValidCallbackUri(const Client &client, const StringType &uri) const
 {
     if (uri.empty())
         return false;
 
-    istringstream iss(this->Uris);
+    //transform(uri.begin(), uri.end(), uri.begin(), tolower);
+
     vector<StringType> tokens;
-    copy(istream_iterator<StringType>(iss), istream_iterator<StringType>(), back_inserter(tokens));
+    tokenizeString(client.RedirectUri, tokens);
 
     for(vector<StringType>::const_iterator it = tokens.begin(); it != tokens.end(); ++it)
-        if (isEqualCaseInsensitive(uri,*it))
+        if (uri == *it)
             return true;
 
     return false;
 };
+
+StringType StandardAuthorizationServerPolicies::getCallbackUri(const Client &client) const
+{
+    vector <StringType> tokens;
+    return tokenizeString(client.RedirectUri, tokens) ? tokens[0] : "";
+};
+// ***** StandardAuthorizationServerPolicies end *****
 
 }; //namespace OAuth2

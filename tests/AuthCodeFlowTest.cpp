@@ -20,17 +20,22 @@ void AuthCodeFlowTest::TestFlow(void)
 {
     SharedPtr<ServiceLocator::ServiceList>::Type list(new ServiceLocator::ServiceList());
     list->HttpResponseFactory = SharedPtr<HttpResponseFactoryMock>::Type(new HttpResponseFactoryMock());
+    list->AuthorizationServerPolicies = SharedPtr<IAuthorizationServerPolicies>::Type (new StandardAuthorizationServerPolicies());
+    list->UserAuthN = SharedPtr<IUserAuthenticationFacade>::Type (new UserAuthenticationFacadeMock());
+    list->ClientAuthZ = SharedPtr<IClientAuthorizationFacade>::Type (new ClientAuthorizationFacadeMock());
+    list->AuthCodeGen = SharedPtr<IAuthorizationCodeGenerator>::Type (new AuthorizationCodeGeneratorMock());
     
     MemoryStorageMock<typename SharedPtr<Client>::Type> *pMemStorage = new MemoryStorageMock<typename SharedPtr<Client>::Type>();
 
-    Client *c = new Client(); c->Id = "01234"; c->Uris = ""; c->Secret = "abc"; c->Scope = "one two three four";
+    Client *c = new Client(); c->Id = "01234"; c->RedirectUri = ""; c->Secret = "abc"; c->Scope = "one two three four";
     pMemStorage->create(SharedPtr<Client>::Type(c));
-    c = new Client(); c->Id = "1234567890"; c->Uris = "http://localhost"; c->Secret = "xxx"; c->Scope = "basic xxx private email";
+    c = new Client(); c->Id = CorrectClientId; c->RedirectUri = "http://localhost"; c->Secret = CorrectClientSecret; c->Scope = "basic xxx private email";
     pMemStorage->create(SharedPtr<Client>::Type(c));
 
     list->ClientStorage = SharedPtr<MemoryStorageMock<typename SharedPtr<Client>::Type> >::Type(pMemStorage);
 
     ServiceLocator::init(list);
+
 
     CodeRequestFilter crf;
 
@@ -43,9 +48,18 @@ void AuthCodeFlowTest::TestFlow(void)
     HTTPRequestResponseMock* r = dynamic_cast<HTTPRequestResponseMock*>(response.get());
     assert(r->getBody() == "{\"error\":\"invalid_request\"}");
 
+    response = crf.processRequest(*_samples.Bad1);
+    r = dynamic_cast<HTTPRequestResponseMock*>(response.get());
+    assert(r->getBody() == "{\"error\":\"unauthorized_client\"}");
+
+    response = crf.processRequest(*_samples.Bad2);
+    r = dynamic_cast<HTTPRequestResponseMock*>(response.get());
+    assert(r->getBody() == "{\"error\":\"invalid_scope\"}");
+
     response = crf.processRequest(*_samples.Good1);
     r = dynamic_cast<HTTPRequestResponseMock*>(response.get());
-    assert(r->getBody() == "{\"error\":\"invalid_request\"}");
+    assert(r->getParam("code") == "X x X");
+
 }
 
 };// namespace Test

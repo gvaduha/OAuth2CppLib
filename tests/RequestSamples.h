@@ -5,9 +5,10 @@ namespace OAuth2
 {
 namespace Test
 {
-
-static const StringType client_id_correct = "1234567890";
-static const StringType client_secret_correct = "SeCrEt";
+    static const StringType CorrectClientId = "xClient14";
+    static const StringType CorrectClientSecret = "x8Secret4y";
+    static const StringType CorrectScope = "email basic";
+    static const StringType CorrectUserId = "IaaUser5";
 
 struct RequestSamples
 {
@@ -24,15 +25,19 @@ struct RequestSamples
     
         headers[""] = "";
         headers["response_type"] = "xxx";
+        headers["client_id"] = "nosuchlient";
         Bad1.reset(new HTTPRequestResponseMock(headers));
     
-        headers["client_secret"] = "yyy";
+        headers["client_id"] = CorrectClientId;
+        headers["scope"] = "pron";
         Bad2.reset(new HTTPRequestResponseMock(headers));
 
-        headers["client_secret"] = client_secret_correct;
+        headers["client_secret"] = CorrectClientSecret;
         headers["response_type"] = "code";
-        headers["client_id"] = client_id_correct;
-        headers["scope"] = "email basic";
+        headers["scope"] = CorrectScope;
+        Good1.reset(new HTTPRequestResponseMock(headers));
+
+        headers[UserAuthenticationFacadeMock::UserIdParamName] = CorrectUserId;
         Good1.reset(new HTTPRequestResponseMock(headers));
     };
 

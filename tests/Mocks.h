@@ -2,6 +2,8 @@
 #include "../Types.h"
 #include "../Interfaces.h"
 #include <map>
+//#include <set>
+#include <sstream>
 
 namespace OAuth2
 {
@@ -45,19 +47,6 @@ protected:
     const StringType DecodeJWE(const StringType &jweToken) const;
 };
 
-//class ApplicationStorageMock : public IClientStorage
-//{
-//private:
-//    std::map<ClientIdType, SP<Client> > _clients;
-//public:
-//    void insertApplication(SP<Client> client)
-//    {
-//        _clients[client->Id] = client;
-//    };
-//
-//    virtual bool IsRedirectUriValid(const ClientIdType &cid, const StringType &uri);
-//    virtual StringType & GetRedirectUri(const ClientIdType &cid);
-//};
 
 template<typename T>
 class MemoryStorageMock : public IStorage<T>
@@ -65,7 +54,7 @@ class MemoryStorageMock : public IStorage<T>
 private:
     std::map<ClientIdType,T> _storage;
 public:
-    T create(T o)
+    T create(T &o)
     {
         _storage[o->Id] = o;
         return o;
@@ -74,14 +63,14 @@ public:
     {
         return _storage[id];
     };
-    T update(T o)
+    T update(T &o)
     {
         return _storage[o->Id] = o;
         return o;
     };
     void remove(const IdType &id)
     {
-        throw std::logic_error("Not needed");
+        _storage.erase(id);
     };
 };
 
@@ -127,6 +116,79 @@ class HttpResponseFactoryMock : public IHttpResponseFactory
 public:
     virtual SharedPtr<IHTTPResponse>::Type Create() const {return SharedPtr<IHTTPResponse>::Type(new HTTPRequestResponseMock());};
 };
+
+
+//For test purpose only! it's external to AS system
+class UserAuthenticationFacadeMock : public IUserAuthenticationFacade
+{
+public:
+    static const StringType AuthPageBody;
+    static const StringType UserIdParamName;
+
+    virtual UserIdType authenticateUser(const IHTTPRequest &request)
+    { 
+        return request.getParam(UserAuthenticationFacadeMock::UserIdParamName);
+    };
+    virtual SharedPtr<IHTTPResponse>::Type makeAuthenticationRequestPage(const IHTTPRequest &request)
+    {
+        SharedPtr<IHTTPResponse>::Type response = ServiceLocator::instance().HttpResponseFactory->Create();
+        response->setBody(UserAuthenticationFacadeMock::AuthPageBody);
+        return response;
+    };
+    virtual SharedPtr<IHTTPResponse>::Type processAuthenticationRequest(const IHTTPRequest &request)
+    {
+        throw std::logic_error("it's external subsystem entrails behaviour! move back!");
+    };
+    virtual ~UserAuthenticationFacadeMock(){};
+};
+
+class ClientAuthorizationFacadeMock : public IClientAuthorizationFacade
+{
+private:
+    /*std::set*/std::map<StringType,int> _grants;
+
+public:
+    static const StringType AuthPageBody;
+    //static const StringType UserIdParamName;
+
+    virtual bool isClientAuthorizedByUser(const UserIdType &userId, const ClientIdType &clientId, const StringType &scope) const
+    {
+        return true; // userId == "";
+    };
+    virtual SharedPtr<IHTTPResponse>::Type makeAuthorizationRequestPage(const UserIdType &userId, const ClientIdType &clientId, const StringType &scope) const
+    {
+        SharedPtr<IHTTPResponse>::Type response = ServiceLocator::instance().HttpResponseFactory->Create();
+        response->setBody(UserAuthenticationFacadeMock::AuthPageBody);
+        return response;
+    };
+    virtual SharedPtr<IHTTPResponse>::Type processAuthorizationRequest(const IHTTPRequest& request)
+    {
+        throw std::logic_error("not implemented YET!");
+    };
+    virtual ~ClientAuthorizationFacadeMock(){};
+};
+
+class AuthorizationCodeGeneratorMock : public IAuthorizationCodeGenerator
+{
+private:
+    std::map<StringType,StringType> _codes;
+
+public:
+    virtual StringType generateAuthorizationCode(const UserIdType &userId, const ClientIdType &clientId, const StringType &scope)
+    {
+        std::ostringstream oss;
+        oss << userId << ":" << clientId << ":" << scope;
+        StringType code = "X x X";
+        _codes[oss.str()] = code;
+        return code;
+    };
+    virtual bool checkAndRemoveAuthorizationCode(const UserIdType &userId, const ClientIdType &clientId, const StringType &scope)
+    {
+        throw std::logic_error("not implemented YET!");
+    };
+    virtual ~AuthorizationCodeGeneratorMock(){};
+};
+
 
 }; //namespace Test
 }; //namespace OAuth2

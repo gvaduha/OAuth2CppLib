@@ -37,42 +37,49 @@ SharedPtr<IHTTPResponse>::Type CodeRequestFilter::processRequest(const IHTTPRequ
     if (cid.empty()) 
         return make_error_response(Errors::invalid_request, "no client_id", request);
 
-    SharedPtr<Client>::Type client = ServiceLocator::instance().ClientStorage->load(cid);
+    ServiceLocator::ServiceList sl = ServiceLocator::instance();
 
-    if (client->isEmpty())
+    SharedPtr<Client>::Type client = sl.ClientStorage->load(cid);
+
+    if (!client)
         return make_error_response(Errors::unauthorized_client, "client unregistered", request);
 
     // scope is OPTIONAL parameter by RFC, but should be in request OR registered with client
     StringType scope = request.getParam("scope");
-    if (scope.empty() && client->Scope.empty())
-        return make_error_response(Errors::invalid_scope, "scope in request and in client are empty", request);
-
     if (scope.empty())
-        scope = client->Scope;
-    else if (!client->isSubScope(scope))
-        return make_error_response(Errors::invalid_scope, "scope in request is wider than defined by client", request);
+        if (client->Scope.empty())
+            return make_error_response(Errors::invalid_scope, "scope in request and in client are empty", request);
+        else
+            scope = client->Scope; // if request has no scope parameter it should be assigned to client's predefined scope
+    else
+        if (!client->Scope.empty() && !sl.AuthorizationServerPolicies->isScopeValid(*client, scope)) // check request scope against client's
+            return make_error_response(Errors::invalid_scope, "scope in request is wider than defined by client", request);
 
-    //// redirect_uri is OPTIONAL parameter by RFC
-    //StringType uri = request.getParam("redirect_uri");
-    //if (!uri.empty() && !ServiceLocator::instance().ClientStorage->IsRedirectUriValid(cid, uri))
-    //    return make_error_response(Errors::invalid_request, "no redirect_uri", request);
-    //else
-    //    uri = ServiceLocator::instance().ClientStorage->GetRedirectUri(cid);
+    // redirect_uri is OPTIONAL parameter by RFC
+    StringType uri = request.getParam("redirect_uri");
+    if (uri.empty())
+        if (client->RedirectUri.empty())
+            return make_error_response(Errors::invalid_request, "no redirect_uri", request);
+        else
+            uri = sl.AuthorizationServerPolicies->getCallbackUri(*client); // if request has no redirect_uri, substitute it from client's
+    else
+        if (!sl.AuthorizationServerPolicies->isValidCallbackUri(*client, uri)) // check that request redirect_uri against client's
+            return make_error_response(Errors::invalid_request, "invalid redirect_uri", request);
 
-    //// authenticate user and get his ID
-    //UserIdType uid = ServiceLocator::instance().UserAuthN->authenticateUser(request);
-    //if (uid.empty())
-    //    return ServiceLocator::instance().UserAuthN->makeAuthenticationRequestPage(request);
+    // authenticate user and get his ID
+    UserIdType uid = sl.UserAuthN->authenticateUser(request);
+    if (uid.empty())
+        return sl.UserAuthN->makeAuthenticationRequestPage(request);
 
-    //// check if application is authorized by user to perform operations on scope
-    //bool authorized = ServiceLocator::instance().ClientAuthZ->isClientAuthorizedByUser(uid, cid, scope);
-    //if (!authorized)
-    //    return ServiceLocator::instance().ClientAuthZ->makeAuthorizationRequestPage(uid, cid, scope);
+    // check if application is authorized by user to perform operations on scope
+    bool authorized = sl.ClientAuthZ->isClientAuthorizedByUser(uid, cid, scope);
+    if (!authorized)
+        return sl.ClientAuthZ->makeAuthorizationRequestPage(uid, cid, scope);
 
-    //// generate code and make response
-    //AuthCodeType code = ServiceLocator::instance().AuthCodeGen->GenerateCode(uid, cid);
+    // generate code and make response
+    AuthCodeType code = sl.AuthCodeGen->generateAuthorizationCode(uid, cid, scope);
 
-    //return makeAuthCodeResponse(code, uri, request);
+    return makeAuthCodeResponse(code, uri, request);
 };
 
 SharedPtr<IHTTPResponse>::Type CodeRequestFilter::makeAuthCodeResponse(const AuthCodeType &code, const StringType uri, const IHTTPRequest &request)

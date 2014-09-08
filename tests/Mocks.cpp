@@ -11,6 +11,15 @@ namespace OAuth2
 namespace Test
 {
 
+const StringType UserAuthenticationFacadeMock::AuthPageBody = "GIVEMEYOURPASSWORD!";
+const StringType UserAuthenticationFacadeMock::UserIdParamName = "UserId";
+
+const StringType ClientAuthorizationFacadeMock::AuthPageBody = 
+    "<html><body>{{Text}}<form id='authz' action='{{Action}}' method='POST'>" \
+    "<button id='submit' type='submit'>Accept</button><button id='deny' type='submit'>Accept</button>"\
+    "</form></body></html>";
+//const StringType ClientAuthorizationFacadeMock::UserIdParamName = "UserId";
+
 void TokenFactoryMock::NewToken_Impl(SharedPtr<TokenMock>::Type token, const UserIdType &uid, const ClientIdType &cid, const StringType &scope) const
 {
     token->ClientId = cid;
