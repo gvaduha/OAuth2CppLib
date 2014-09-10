@@ -5,16 +5,44 @@
 
 namespace OAuth2
 {
+//    Authorization Code Grant
+//    
+//    Authorization Request:
+//    ----------------------
+//    response_type REQUIRED == "code".
+//    client_id REQUIRED RFC6749 Section 2.2.
+//    redirect_uri OPTIONAL RFC6749 Section 3.1.2.
+//    scope OPTIONAL RFC6749 Section 3.3.
+//    state RECOMMENDED
+//    
+//    Authorization Response:
+//    -----------------------
+//    code REQUIRED
+//    state REQUIRED if in request
+//    error REQUIRED  [invalid_request, unauthorized_client,access_denied,unsupported_response_type,invalid_scope,server_error,temporarily_unavailable]
+//    error_description OPTIONAL
+//    error_uri OPTIONAL
+//
+//    Token Request:
+//    --------------
+//    grant_type REQUIRED == "authorization_code".
+//    code REQUIRED code received from Authorization endpoint.
+//    redirect_uri REQUIRED if included in authorization request (values must be identical!)
+//    scope OPTIONAL RFC6749 Section 3.3.
+//    state RECOMMENDED
+//    
+//
+//   OAUTH_NAMED_STRING_CONST(kAuthzResponseType,"code");
 namespace AuthorizationCodeGrant
 {
 
-class CodeRequestFilter : public IRequestFilter
+class CodeRequestProcessor : public IRequestProcessor
 {
 public:
-    CodeRequestFilter()
+    CodeRequestProcessor()
     {};
 
-    virtual ~CodeRequestFilter() {};
+    virtual ~CodeRequestProcessor() {};
 
     virtual bool canProcessRequest(const IHTTPRequest &request) const
     {
@@ -24,37 +52,26 @@ public:
     virtual SharedPtr<IHTTPResponse>::Type processRequest(const IHTTPRequest &request);
 
 private:
-    SharedPtr<IHTTPResponse>::Type makeAuthCodeResponse(const AuthCodeType &code, const StringType uri, const IHTTPRequest &request);
+    SharedPtr<IHTTPResponse>::Type makeAuthCodeResponse(const AuthCodeType &code, const string redirect_uri, const IHTTPRequest &request);
 };
 
-class TokenRequestFilter : public IRequestFilter
+class TokenRequestProcessor : public IRequestProcessor
 {
 public:
-    TokenRequestFilter() {};
-    virtual ~TokenRequestFilter() {};
+    TokenRequestProcessor() {};
+    virtual ~TokenRequestProcessor() {};
 
     virtual bool canProcessRequest(const IHTTPRequest & request) const
     {
         return request.getParam("grant_type") == "authorization_code";
     };
 
-    virtual SharedPtr<IHTTPResponse>::Type processRequest(const IHTTPRequest& request) const
-    {
-        ClientIdType cid = ServiceLocator::instance().ClientAuthN->authenticateClient(request);
+    virtual SharedPtr<IHTTPResponse>::Type processRequest(const IHTTPRequest& request);
 
-        if (cid.empty()) return make_error_response(Errors::unauthorized_client, "", request);
-
-        /////////////////////////////////////////////////////////////////////////
-        //Create Token, Save Token, makeTokenResponse(...)
-        exit(666);
-    };
-
+private:
+    SharedPtr<IHTTPResponse>::Type makeTokenResponse(/*const Token &code, */const IHTTPRequest &request);
 };
 
 };// namespace AuthorizationCodeGrant
 };// namespace OAuth2
-
-namespace ImplicitGrant
-{
-};
 

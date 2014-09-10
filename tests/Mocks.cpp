@@ -11,27 +11,27 @@ namespace OAuth2
 namespace Test
 {
 
-const StringType UserAuthenticationFacadeMock::AuthPageBody = "GIVEMEYOURPASSWORD!";
-const StringType UserAuthenticationFacadeMock::UserIdParamName = "UserId";
+const string UserAuthenticationFacadeMock::AuthPageBody = "GIVEMEYOURPASSWORD!";
+const string UserAuthenticationFacadeMock::UserIdParamName = "UserId";
 
-const StringType ClientAuthorizationFacadeMock::AuthPageBody = 
+const string ClientAuthorizationFacadeMock::AuthPageBody = 
     "<html><body>{{Text}}<form id='authz' action='{{Action}}' method='POST'>" \
     "<button id='submit' type='submit'>Accept</button><button id='deny' type='submit'>Accept</button>"\
     "</form></body></html>";
-//const StringType ClientAuthorizationFacadeMock::UserIdParamName = "UserId";
+//const string ClientAuthorizationFacadeMock::UserIdParamName = "UserId";
 
-void TokenFactoryMock::NewToken_Impl(SharedPtr<TokenMock>::Type token, const UserIdType &uid, const ClientIdType &cid, const StringType &scope) const
+void TokenFactoryMock::NewToken_Impl(SharedPtr<TokenMock>::Type token, const UserIdType &uid, const ClientIdType &cid, const string &scope) const
 {
     token->ClientId = cid;
     token->UserId = uid;
     token->Scope = scope;
 };
 
-void TokenFactoryMock::FromJWT_Impl(SharedPtr<TokenMock>::Type token, const StringType &jwtToken) const
+void TokenFactoryMock::FromJWT_Impl(SharedPtr<TokenMock>::Type token, const string &jwtToken) const
 {
     istringstream iss(jwtToken);
     string part;   
-    vector<StringType> tmp;
+    vector<string> tmp;
     
     while ( getline(iss, part, '|') )
         tmp.push_back(part);
@@ -44,12 +44,12 @@ void TokenFactoryMock::FromJWT_Impl(SharedPtr<TokenMock>::Type token, const Stri
     token->Scope = tmp[2];
 };
 
-const bool TokenFactoryMock::IsValidJWS(const StringType &jwtToken) const
+const bool TokenFactoryMock::IsValidJWS(const string &jwtToken) const
 {
     return true;
 };
 
-const StringType TokenFactoryMock::DecodeJWE(const StringType &jweToken) const
+const string TokenFactoryMock::DecodeJWE(const string &jweToken) const
 {
     return jweToken;
 };

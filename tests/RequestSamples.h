@@ -5,10 +5,10 @@ namespace OAuth2
 {
 namespace Test
 {
-    static const StringType CorrectClientId = "xClient14";
-    static const StringType CorrectClientSecret = "x8Secret4y";
-    static const StringType CorrectScope = "email basic";
-    static const StringType CorrectUserId = "IaaUser5";
+    static const string CorrectClientId = "xClient14";
+    static const string CorrectClientSecret = "x8Secret4y";
+    static const string CorrectScope = "email basic";
+    static const string CorrectUserId = "IaaUser5";
 
 struct RequestSamples
 {

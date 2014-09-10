@@ -1,14 +1,14 @@
 #pragma once
 #include "Types.h"
 
-#define OAUTH_STRING_CONST(NAME) static const StringType NAME(#NAME);
-#define OAUTH_NAMED_STRING_CONST(KNAME,VALUE) static const StringType KNAME(VALUE);
+#define OAUTH_STRING_CONST(NAME) static const string NAME(#NAME);
+#define OAUTH_NAMED_STRING_CONST(KNAME,VALUE) static const string KNAME(VALUE);
 
 namespace OAuth2
 {
 namespace Params
 {
-    typedef StringType Type;
+    typedef string Type;
 
     OAUTH_STRING_CONST(response_type);
     OAUTH_STRING_CONST(client_id);
@@ -32,7 +32,7 @@ namespace Params
 
 namespace Errors
 {
-    typedef StringType Type;
+    typedef string Type;
 
     OAUTH_STRING_CONST(invalid_request);
     OAUTH_STRING_CONST(unauthorized_client);

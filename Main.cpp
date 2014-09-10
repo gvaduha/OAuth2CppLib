@@ -10,65 +10,42 @@
 using namespace OAuth2;
 using namespace OAuth2::Test;
 
-
-class RFC_values_for_grant_types
+enum Endpoint
 {
-    //Implicit Grant
-    //
-    //Authorization Request:
-    //----------------------
-    //response_type REQUIRED == "token".
-    //client_id REQUIRED RFC6749 Section 2.2.
-    //redirect_uri OPTIONAL RFC6749 Section 3.1.2.
-    //scope OPTIONAL RFC6749 Section 3.3.
-    //state RECOMMENDED
-    //
-    //Authorization Response:
-    //-----------------------
-
-    //Resource Owner Password Credentials Grant
-    //
-    //Authorization Request and Response - NO
-    //
-    //Access Token Request:
-    //---------------------
-    //grant_type REQUIRED == "password".
-    //username REQUIRED
-    //password REQUIRED
-    //scope OPTIONAL RFC6749 Section 3.3.
-    //
-    //Access Token Response:
-    //----------------------
-    //
-
-    //Client Credentials Grant
-    //
-    //Authorization Request and Response - NO
-    //
-    //Access Token Request:
-    //---------------------
-    //grant_type REQUIRED == "password".
-    //scope OPTIONAL RFC6749 Section 3.3.
-    //
-    //Access Token Response:
-    //----------------------
-    //
+    Auth,
+    Token
 };
-
-
 
 void test_run();
 
-
 int main()
 {
-
 
     //-TEST-TEST-TEST-TEST-TEST
     test_run();
     //-TEST-TEST-TEST-TEST-TEST
 
 	return 0;
+};
+
+SharedPtr<IHTTPResponse>::Type processRequest(Endpoint ep, HTTPRequestResponseMock req)
+{
+    ServerEndpoint* authep;
+    ServerEndpoint* tokenep;
+
+    AuthorizationServer as(authep, tokenep);
+
+    switch (ep)
+    {
+    case Auth:
+        return as.authorizationEndpoint(req);
+        break;
+    case Token:
+        return as.authorizationEndpoint(req);
+        break;
+    default:
+        return OAuth2::make_error_response(Errors::invalid_request,"UNKNOWS EP", req);
+    };
 };
 
 void test_run()

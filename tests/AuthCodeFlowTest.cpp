@@ -34,31 +34,33 @@ void AuthCodeFlowTest::TestFlow(void)
 
     list->ClientStorage = SharedPtr<MemoryStorageMock<typename SharedPtr<Client>::Type> >::Type(pMemStorage);
 
+    list->ClientAuthN = SharedPtr<IClientAuthenticationFacade>::Type(NULL);
+
     ServiceLocator::init(list);
 
 
-    CodeRequestFilter crf;
+    CodeRequestProcessor crp;
 
-    assert(!crf.canProcessRequest(*_samples.Empty));
-    assert(!crf.canProcessRequest(*_samples.Bad1));
-    assert(crf.canProcessRequest(*_samples.Good1));
+    assert(!crp.canProcessRequest(*_samples.Empty));
+    assert(!crp.canProcessRequest(*_samples.Bad1));
+    assert(crp.canProcessRequest(*_samples.Good1));
 
-    SharedPtr<IHTTPResponse>::Type response = crf.processRequest(*_samples.Empty);
+    SharedPtr<IHTTPResponse>::Type response = crp.processRequest(*_samples.Empty);
     
     HTTPRequestResponseMock* r = dynamic_cast<HTTPRequestResponseMock*>(response.get());
     assert(r->getBody() == "{\"error\":\"invalid_request\"}");
 
-    response = crf.processRequest(*_samples.Bad1);
+    response = crp.processRequest(*_samples.Bad1);
     r = dynamic_cast<HTTPRequestResponseMock*>(response.get());
     assert(r->getBody() == "{\"error\":\"unauthorized_client\"}");
 
-    response = crf.processRequest(*_samples.Bad2);
+    response = crp.processRequest(*_samples.Bad2);
     r = dynamic_cast<HTTPRequestResponseMock*>(response.get());
     assert(r->getBody() == "{\"error\":\"invalid_scope\"}");
 
-    response = crf.processRequest(*_samples.Good1);
+    response = crp.processRequest(*_samples.Good1);
     r = dynamic_cast<HTTPRequestResponseMock*>(response.get());
-    assert(r->getParam("code") == "X x X");
+    assert(!r->getParam("code").empty());
 
 }
 

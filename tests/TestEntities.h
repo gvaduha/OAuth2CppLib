@@ -21,7 +21,7 @@ public:
         assert(!t->IsInTokenScope("shii"));
 
         //Conversion
-        StringType jwt = t->ToJWT();
+        string jwt = t->ToJWT();
         SharedPtr<TokenMock>::Type t1 = factory->FromJWT(jwt);
 
         assert(t->ClientId == t1->ClientId && t->UserId == t1->UserId && t->Scope == t1->Scope);

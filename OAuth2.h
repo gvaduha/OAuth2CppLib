@@ -5,7 +5,7 @@
 namespace OAuth2
 {
 ///****************** UNCHARTED
-SharedPtr<IHTTPResponse>::Type make_error_response(const Errors::Type &error, const StringType &msg, const IHTTPRequest &request);
+SharedPtr<IHTTPResponse>::Type make_error_response(const Errors::Type &error, const string &msg, const IHTTPRequest &request);
 ///****************** UNCHARTED
 
 
@@ -19,40 +19,90 @@ SharedPtr<IHTTPResponse>::Type make_error_response(const Errors::Type &error, co
 class StandardAuthorizationServerPolicies : public IAuthorizationServerPolicies
 {
 public:
-    virtual bool isScopeValid(const Client &client, const StringType &scope) const;
-    virtual bool isValidCallbackUri(const Client &client, const StringType &uri) const;
-    virtual StringType getCallbackUri(const Client &client) const;
+    virtual bool isScopeValid(const Client &client, const string &scope) const;
+    virtual bool isValidCallbackUri(const Client &client, const string &uri) const;
+    virtual string getCallbackUri(const Client &client) const;
 };
 
-// OAuth2 Authorization server implementation
+// OAuth2 Endpoint implementation
 // Process request through queue of RequestProcessingUnit 
 // selecting first appropriate (RequestProcessingUnit.filter match)
-class AuthorizationServer
+class ServerEndpoint
 {
 public:
-    typedef std::vector<SharedPtr<IRequestFilter>::Type> RequestFilterQueueType;
-        typedef SharedPtr<IHTTPRequest>::Type (*PreprocessFuncPtr)(IHTTPRequest &);
-        typedef SharedPtr<IHTTPResponse>::Type (*PostprocessFuncPtr)(IHTTPResponse &);
+    typedef std::vector<SharedPtr<IRequestProcessor>::Type> RequestProcessorsQueueType;
+    typedef std::vector<SharedPtr<IRequestFilter>::Type> RequestFiltersQueueType;
+    typedef std::vector<SharedPtr<IResponseFilter>::Type> ResponseFiltersQueueType;
 
 private:
-    SharedPtr<RequestFilterQueueType>::Type _request_filters;
+    RequestProcessorsQueueType *_requestProcessors;
+    RequestFiltersQueueType *_requestFilters;
+    ResponseFiltersQueueType *_responseFilters;
+    
 
-    struct request_can_be_processed_lambda : std::unary_function<IRequestFilter, bool>
+    struct request_can_be_processed_lambda : std::unary_function<IRequestProcessor, bool>
     {
         request_can_be_processed_lambda(const IHTTPRequest &request)
             : _request(request)
         {};
 
-        bool operator()(SharedPtr<IRequestFilter>::Type filter) const { return filter->canProcessRequest(_request); }
+        bool operator()(SharedPtr<IRequestProcessor>::Type filter) const { return filter->canProcessRequest(_request); }
 
     private:
         const IHTTPRequest& _request;
     };
 
 public:
-    AuthorizationServer(SharedPtr<RequestFilterQueueType>::Type request_filters);
+    ServerEndpoint(RequestProcessorsQueueType *requestProcessors, RequestFiltersQueueType *requestFilters, ResponseFiltersQueueType *responseFilters);
 
-    SharedPtr<IHTTPResponse>::Type processRequest(IHTTPRequest const &request);
+    // Process incoming request and return response
+    // first request preprocessing by set of request filters, than processor selected 
+    // depending on request and finally response processed by filters
+    // request param can be changed by filters, so parmeter should be copied before call
+    SharedPtr<IHTTPResponse>::Type processRequest(IHTTPRequest &request) const;
+
+    ~ServerEndpoint()
+    {
+        delete _requestFilters;
+        delete _requestProcessors;
+        delete _responseFilters;
+    };
+
+private:
+    ServerEndpoint(const ServerEndpoint &);
+    ServerEndpoint & operator=(const ServerEndpoint &);
+};
+
+// Catch requests from two RFC defined endpoints (Authorization and Token)
+// and delegate requests to ServerEnpoint class for processing
+class AuthorizationServer
+{
+private:
+    ServerEndpoint* _authorizationEndpoint;
+    ServerEndpoint* _tokenEndpoint;
+public:
+    AuthorizationServer(ServerEndpoint* authorizationEndpoint, ServerEndpoint* tokenEndpoint)
+        : _authorizationEndpoint(authorizationEndpoint), _tokenEndpoint(tokenEndpoint)
+    {}
+
+    SharedPtr<IHTTPResponse>::Type authorizationEndpoint(IHTTPRequest &request) const
+    {
+        return _authorizationEndpoint->processRequest(request);
+    };
+
+    SharedPtr<IHTTPResponse>::Type tokenEndpoint(IHTTPRequest &request) const
+    {
+        return _tokenEndpoint->processRequest(request);
+    };
+
+    ~AuthorizationServer()
+    {
+        delete _authorizationEndpoint;
+        delete _tokenEndpoint;
+    };
+private:
+    AuthorizationServer(const AuthorizationServer &);
+    AuthorizationServer & operator=(const AuthorizationServer &);
 };
 
 }; //namespace OAuth2

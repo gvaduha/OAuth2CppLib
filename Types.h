@@ -5,11 +5,11 @@
 
 namespace OAuth2
 {
-    typedef std::string StringType;
+    typedef std::string string;
     template<typename T> struct SharedPtr { typedef std::shared_ptr<T> Type; };
-    typedef StringType IdType;
+    typedef string IdType;
     typedef IdType ClientIdType;
     typedef IdType UserIdType;
-    typedef StringType AuthCodeType;
+    typedef string AuthCodeType;
     typedef int HttpCodeType;
 };

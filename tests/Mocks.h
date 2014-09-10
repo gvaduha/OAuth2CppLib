@@ -2,8 +2,11 @@
 #include "../Types.h"
 #include "../Interfaces.h"
 #include <map>
+#include <vector>
 //#include <set>
+#include <algorithm>
 #include <sstream>
+#include <ctime>
 
 namespace OAuth2
 {
@@ -13,16 +16,16 @@ namespace Test
 class TokenMock
 {
 public:
-    StringType Scope;
+    string Scope;
     UserIdType UserId;
     ClientIdType ClientId;
     
-    bool IsInTokenScope(StringType scope)
+    bool IsInTokenScope(string scope)
     {
         return Scope.find(scope) != Scope.npos;
     };
     
-    const StringType ToJWT() const
+    const string ToJWT() const
     {
         return UserId+"|"+ClientId+"|"+Scope;
     };
@@ -41,10 +44,10 @@ private:
 class TokenFactoryMock : public ITokenFactory<TokenMock>
 {
 protected:
-    virtual void NewToken_Impl(SharedPtr<TokenMock>::Type token, const UserIdType &uid, const ClientIdType &cid, const StringType &scope) const;
-    virtual void FromJWT_Impl(SharedPtr<TokenMock>::Type token, const StringType &jwtToken) const;
-    const bool IsValidJWS(const StringType &jwtToken) const;
-    const StringType DecodeJWE(const StringType &jweToken) const;
+    virtual void NewToken_Impl(SharedPtr<TokenMock>::Type token, const UserIdType &uid, const ClientIdType &cid, const string &scope) const;
+    virtual void FromJWT_Impl(SharedPtr<TokenMock>::Type token, const string &jwtToken) const;
+    const bool IsValidJWS(const string &jwtToken) const;
+    const string DecodeJWE(const string &jweToken) const;
 };
 
 
@@ -83,9 +86,9 @@ public:
 private:
     mutable MapType _headers; //since op[] change map
     mutable MapType _params; //since op[] change map
-    StringType _uri;
-    StringType _body;
-    StringType _verb;
+    string _uri;
+    string _body;
+    string _verb;
     HttpCodeType _code;
 
 public:
@@ -94,20 +97,21 @@ public:
     MapType getHeaders() const { return _params; };
 
     //Request
-    virtual StringType getVerb() const { return _verb; }
-    virtual bool isHeaderExist(const StringType &name) const { return _headers.find(name) != _headers.end(); };
-    virtual StringType getHeader(const StringType &name) const  { return _headers[name]; };
-    virtual bool isParamExist(const StringType &name) const { return _params.find(name) != _params.end(); };
-    virtual StringType getParam(const StringType &name) const  { return _params[name]; }; //should switch by HTTP verb
-    virtual StringType getURI() const { return _uri; };
-    virtual StringType const & getBody() const {return _body;};
+    virtual string getVerb() const { return _verb; }
+    virtual bool isHeaderExist(const string &name) const { return _headers.find(name) != _headers.end(); };
+    virtual string getHeader(const string &name) const  { return _headers[name]; };
+    virtual bool isParamExist(const string &name) const { return _params.find(name) != _params.end(); };
+    virtual string getParam(const string &name) const  { return _params[name]; }; //should switch by HTTP verb
+    virtual string getURI() const { return _uri; };
+    virtual string getBody() const {return _body;};
     virtual HttpCodeType getCode() const {return _code;};
+    virtual string HttpUniqueId () const { return "XXX"; };
 
     //Response
-    virtual void addHeader(StringType const &name, StringType const &value) {_headers[name]=value;};
-    virtual void addParam(const StringType &name, const StringType &value) {_params[name]=value;};
-    virtual void setURI(StringType const &uri) {_uri =uri;};
-    virtual void setBody(StringType const &body) {_body = body;};
+    virtual void addHeader(string const &name, string const &value) {_headers[name]=value;};
+    virtual void addParam(const string &name, const string &value) {_params[name]=value;};
+    virtual void setURI(string const &uri) {_uri =uri;};
+    virtual void setBody(string const &body) {_body = body;};
     virtual void setCode(HttpCodeType code) {_code = code;};
 };
 
@@ -122,8 +126,8 @@ public:
 class UserAuthenticationFacadeMock : public IUserAuthenticationFacade
 {
 public:
-    static const StringType AuthPageBody;
-    static const StringType UserIdParamName;
+    static const string AuthPageBody;
+    static const string UserIdParamName;
 
     virtual UserIdType authenticateUser(const IHTTPRequest &request)
     { 
@@ -145,17 +149,17 @@ public:
 class ClientAuthorizationFacadeMock : public IClientAuthorizationFacade
 {
 private:
-    /*std::set*/std::map<StringType,int> _grants;
+    /*std::set*/std::map<string,int> _grants;
 
 public:
-    static const StringType AuthPageBody;
-    //static const StringType UserIdParamName;
+    static const string AuthPageBody;
+    //static const string UserIdParamName;
 
-    virtual bool isClientAuthorizedByUser(const UserIdType &userId, const ClientIdType &clientId, const StringType &scope) const
+    virtual bool isClientAuthorizedByUser(const UserIdType &userId, const ClientIdType &clientId, const string &scope) const
     {
         return true; // userId == "";
     };
-    virtual SharedPtr<IHTTPResponse>::Type makeAuthorizationRequestPage(const UserIdType &userId, const ClientIdType &clientId, const StringType &scope) const
+    virtual SharedPtr<IHTTPResponse>::Type makeAuthorizationRequestPage(const UserIdType &userId, const ClientIdType &clientId, const string &scope) const
     {
         SharedPtr<IHTTPResponse>::Type response = ServiceLocator::instance().HttpResponseFactory->Create();
         response->setBody(UserAuthenticationFacadeMock::AuthPageBody);
@@ -168,23 +172,45 @@ public:
     virtual ~ClientAuthorizationFacadeMock(){};
 };
 
+// Save generate and save code in memory storage
+// RFC6749 4.1.3
 class AuthorizationCodeGeneratorMock : public IAuthorizationCodeGenerator
 {
 private:
-    std::map<StringType,StringType> _codes;
+    std::map<string,string> _codes;
 
 public:
-    virtual StringType generateAuthorizationCode(const UserIdType &userId, const ClientIdType &clientId, const StringType &scope)
+    AuthorizationCodeGeneratorMock()
+    {
+        srand(static_cast<unsigned int>(std::time(NULL)));
+    };
+
+    virtual string generateAuthorizationCode(const RequestParams &params)
     {
         std::ostringstream oss;
-        oss << userId << ":" << clientId << ":" << scope;
-        StringType code = "X x X";
-        _codes[oss.str()] = code;
+        oss << params.userId << ":" << params.clientId << ":" << params.scope << ":" << params.uri << ":";
+        string code = std::to_string(std::rand());
+        _codes[code] = oss.str();
         return code;
     };
-    virtual bool checkAndRemoveAuthorizationCode(const UserIdType &userId, const ClientIdType &clientId, const StringType &scope)
+    virtual bool checkAndRemoveAuthorizationCode(const string &code, RequestParams &params)
     {
-        throw std::logic_error("not implemented YET!");
+        if (_codes.find(code) == _codes.end()) return false;
+
+        std::istringstream iss(_codes[code]);
+
+        std::vector<string> out;
+
+        std::string val;
+        while (std::getline(iss, val, ':'))
+            out.push_back(val);
+
+        params.userId = out[0];
+        params.clientId = out[1];
+        params.scope = out[2];
+        params.uri = out[3];
+
+        return true;
     };
     virtual ~AuthorizationCodeGeneratorMock(){};
 };

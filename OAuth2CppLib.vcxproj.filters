@@ -13,6 +13,7 @@
     <ClCompile Include="tests\AuthCodeFlowTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
+    <ClCompile Include="Helpers.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AuthorizationCodeGrant.h" />
@@ -35,6 +36,7 @@
     <ClInclude Include="tests\AuthCodeFlowTest.h">
       <Filter>Tests</Filter>
     </ClInclude>
+    <ClInclude Include="Helpers.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />

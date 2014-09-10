@@ -1,36 +1,15 @@
-﻿//#include "Types.h"
-//#include "Constants.h"
-//#include "Interfaces.h"
-//#include "OAuth2.h"
-
-#include "AuthorizationCodeGrant.h"
+﻿#include "AuthorizationCodeGrant.h"
+#include "Helpers.h"
 
 namespace OAuth2
 {
 
 namespace AuthorizationCodeGrant
 {
-//    //Authorization Code Grant
-//    //
-//    //Authorization Request:
-//    //----------------------
-//    //response_type REQUIRED == "code".
-//    //client_id REQUIRED RFC6749 Section 2.2.
-//    //redirect_uri OPTIONAL RFC6749 Section 3.1.2.
-//    //scope OPTIONAL RFC6749 Section 3.3.
-//    //state RECOMMENDED
-//    //
-//    //Authorization Response:
-//    //-----------------------
-//    //code REQUIRED
-//    //state REQUIRED if in request
-//    //error REQUIRED  [invalid_request, unauthorized_client,access_denied,unsupported_response_type,invalid_scope,server_error,temporarily_unavailable]
-//    //error_description OPTIONAL
-//    //error_uri OPTIONAL
-//
-//   OAUTH_NAMED_STRING_CONST(kAuthzResponseType,"code");
 
-SharedPtr<IHTTPResponse>::Type CodeRequestFilter::processRequest(const IHTTPRequest &request)
+    using namespace Helpers;
+
+SharedPtr<IHTTPResponse>::Type CodeRequestProcessor::processRequest(const IHTTPRequest &request)
 {
     // validation
     ClientIdType cid = request.getParam("client_id");
@@ -45,7 +24,7 @@ SharedPtr<IHTTPResponse>::Type CodeRequestFilter::processRequest(const IHTTPRequ
         return make_error_response(Errors::unauthorized_client, "client unregistered", request);
 
     // scope is OPTIONAL parameter by RFC, but should be in request OR registered with client
-    StringType scope = request.getParam("scope");
+    string scope = request.getParam("scope");
     if (scope.empty())
         if (client->Scope.empty())
             return make_error_response(Errors::invalid_scope, "scope in request and in client are empty", request);
@@ -56,7 +35,7 @@ SharedPtr<IHTTPResponse>::Type CodeRequestFilter::processRequest(const IHTTPRequ
             return make_error_response(Errors::invalid_scope, "scope in request is wider than defined by client", request);
 
     // redirect_uri is OPTIONAL parameter by RFC
-    StringType uri = request.getParam("redirect_uri");
+    string uri = request.getParam("redirect_uri");
     if (uri.empty())
         if (client->RedirectUri.empty())
             return make_error_response(Errors::invalid_request, "no redirect_uri", request);
@@ -77,12 +56,15 @@ SharedPtr<IHTTPResponse>::Type CodeRequestFilter::processRequest(const IHTTPRequ
         return sl.ClientAuthZ->makeAuthorizationRequestPage(uid, cid, scope);
 
     // generate code and make response
-    AuthCodeType code = sl.AuthCodeGen->generateAuthorizationCode(uid, cid, scope);
+    // it's important that redirect_uri is as in request for token request (see RFC6749 4.1.3 request requirements)
+    IAuthorizationCodeGenerator::RequestParams params(uid, cid, scope, request.getParam("redirect_uri"));
+
+    AuthCodeType code = sl.AuthCodeGen->generateAuthorizationCode(params);
 
     return makeAuthCodeResponse(code, uri, request);
 };
 
-SharedPtr<IHTTPResponse>::Type CodeRequestFilter::makeAuthCodeResponse(const AuthCodeType &code, const StringType uri, const IHTTPRequest &request)
+SharedPtr<IHTTPResponse>::Type CodeRequestProcessor::makeAuthCodeResponse(const AuthCodeType &code, const string redirect_uri, const IHTTPRequest &request)
 {
     SharedPtr<IHTTPResponse>::Type response = ServiceLocator::instance().HttpResponseFactory->Create();
 
@@ -91,7 +73,52 @@ SharedPtr<IHTTPResponse>::Type CodeRequestFilter::makeAuthCodeResponse(const Aut
 
     response->addParam("code", code);
 
-    response->setURI(uri);
+    response->addHeader("Location", redirect_uri);
+
+    response->setCode(302);
+
+    return response;
+};
+
+
+SharedPtr<IHTTPResponse>::Type TokenRequestProcessor::processRequest(const IHTTPRequest& request)
+{
+    ServiceLocator::ServiceList sl = ServiceLocator::instance();
+    ClientIdType cid = sl.ClientAuthN->authenticateClient(request);
+
+    if (cid.empty())
+        return make_error_response(Errors::unauthorized_client, "", request);
+
+    IAuthorizationCodeGenerator::RequestParams codeAssoc;
+    sl.AuthCodeGen->checkAndRemoveAuthorizationCode(request.getParam("code"), codeAssoc);
+
+    if(request.getParam("redirect_uri") != codeAssoc.uri || request.getParam("client_id") != codeAssoc.clientId)
+        make_error_response(Errors::invalid_request, "code not found", request);
+
+    /////////////////////////////////////////////////////////////////////////
+    //Create Token, Save Token, makeTokenResponse(...)
+    
+
+    return makeTokenResponse(request);
+};
+
+
+SharedPtr<IHTTPResponse>::Type TokenRequestProcessor::makeTokenResponse(/*const Token &code, */const IHTTPRequest &request)
+{
+    SharedPtr<IHTTPResponse>::Type response = ServiceLocator::instance().HttpResponseFactory->Create();
+
+    response->addHeader("Content-Type","application/json;charset=UTF-8");
+    response->addHeader("Cache-Control","no-store");
+    response->addHeader("Pragma","no-cache");
+
+    jsonmap_t map;
+    map.insert(jsonpair_t("access_token","XXXXX"));
+    map.insert(jsonpair_t("token_type","Bearer"));
+    map.insert(jsonpair_t("expires_in","XXXXX"));
+    map.insert(jsonpair_t("refresh_token","XXXXX"));
+
+    response->setBody(mapToJSON(map));
+    response->setCode(200);
 
     return response;
 };
