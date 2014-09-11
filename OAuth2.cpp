@@ -6,14 +6,15 @@
 
 #include <algorithm>
 #include <sstream>
-#include <cassert>
-#include <functional>
+#include <vector>
 #include "Helpers.h"
 
 namespace OAuth2
 {
 
-using namespace std;
+using std::vector;
+using std::istringstream;
+using std::istream_iterator;
 using namespace Helpers;
 
 SharedPtr<ServiceLocator::ServiceList>::Type ServiceLocator::_impl = NULL;
@@ -35,7 +36,7 @@ SharedPtr<IHTTPResponse>::Type make_error_response(const Errors::Type &error, co
 
 
 // ***** ServerEndpoint begin *****
-ServerEndpoint::ServerEndpoint(RequestProcessorsQueueType *requestProcessors, RequestFiltersQueueType *requestFilters, ResponseFiltersQueueType *responseFilters)
+ServerEndpoint::ServerEndpoint(RequestFiltersQueueType *requestFilters, RequestProcessorsQueueType *requestProcessors, ResponseFiltersQueueType *responseFilters)
     : _requestProcessors(requestProcessors), _requestFilters(requestFilters), _responseFilters(responseFilters)
 {};
 

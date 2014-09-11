@@ -1,6 +1,6 @@
 #pragma once
 #include "Constants.h"
-#include <vector>
+#include <list>
 
 namespace OAuth2
 {
@@ -30,9 +30,9 @@ public:
 class ServerEndpoint
 {
 public:
-    typedef std::vector<SharedPtr<IRequestProcessor>::Type> RequestProcessorsQueueType;
-    typedef std::vector<SharedPtr<IRequestFilter>::Type> RequestFiltersQueueType;
-    typedef std::vector<SharedPtr<IResponseFilter>::Type> ResponseFiltersQueueType;
+    typedef std::list<SharedPtr<IRequestProcessor>::Type> RequestProcessorsQueueType;
+    typedef std::list<SharedPtr<IRequestFilter>::Type> RequestFiltersQueueType;
+    typedef std::list<SharedPtr<IResponseFilter>::Type> ResponseFiltersQueueType;
 
 private:
     RequestProcessorsQueueType *_requestProcessors;
@@ -53,13 +53,44 @@ private:
     };
 
 public:
-    ServerEndpoint(RequestProcessorsQueueType *requestProcessors, RequestFiltersQueueType *requestFilters, ResponseFiltersQueueType *responseFilters);
+    ServerEndpoint(RequestFiltersQueueType *requestFilters, RequestProcessorsQueueType *requestProcessors, ResponseFiltersQueueType *responseFilters);
 
     // Process incoming request and return response
     // first request preprocessing by set of request filters, than processor selected 
     // depending on request and finally response processed by filters
     // request param can be changed by filters, so parmeter should be copied before call
     SharedPtr<IHTTPResponse>::Type processRequest(IHTTPRequest &request) const;
+
+    // All push functions are NOT thread safe because no runtime Endpoint addition expected
+    inline void pushFrontRequestFilter(IRequestFilter *filter)
+    {
+        _requestFilters->push_front(SharedPtr<IRequestFilter>::Type(filter));
+    };
+
+    inline void pushBackRequestFilter(IRequestFilter *filter)
+    {
+        _requestFilters->push_back(SharedPtr<IRequestFilter>::Type(filter));
+    };
+
+    inline void pushFrontResponseFilter(IResponseFilter *filter)
+    {
+        _responseFilters->push_front(SharedPtr<IResponseFilter>::Type(filter));
+    };
+
+    inline void pushBackResponseFilter(IResponseFilter *filter)
+    {
+        _responseFilters->push_back(SharedPtr<IResponseFilter>::Type(filter));
+    };
+
+    inline void pushFrontRequestProcessor(IRequestProcessor *processor)
+    {
+        _requestProcessors->push_front(SharedPtr<IRequestProcessor>::Type(processor));
+    };
+
+    inline void pushBackRequestProcessor(IRequestProcessor *processor)
+    {
+        _requestProcessors->push_back(SharedPtr<IRequestProcessor>::Type(processor));
+    };
 
     ~ServerEndpoint()
     {

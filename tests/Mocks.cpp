@@ -4,7 +4,8 @@
 #include <iostream>
 #include <sstream>
 
-using namespace std;
+using std::vector;
+using std::istringstream;
 
 namespace OAuth2
 {

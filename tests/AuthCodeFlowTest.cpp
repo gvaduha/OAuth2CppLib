@@ -3,7 +3,6 @@
 #include "../AuthorizationCodeGrant.h"
 #include "RequestSamples.h"
 
-using namespace std;
 using namespace OAuth2::AuthorizationCodeGrant;
 
 namespace OAuth2
