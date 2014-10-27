@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OAuth2CppLib", "OAuth2CppLib\OAuth2CppLib.vcxproj", "{FDE531B1-CE5C-4187-92DC-C09578C11E36}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestServer", "TestServer\TestServer.vcxproj", "{3E4A7537-308A-4FA6-9C5E-DB543C2EE107}"
+	ProjectSection(ProjectDependencies) = postProject
+		{FDE531B1-CE5C-4187-92DC-C09578C11E36} = {FDE531B1-CE5C-4187-92DC-C09578C11E36}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
