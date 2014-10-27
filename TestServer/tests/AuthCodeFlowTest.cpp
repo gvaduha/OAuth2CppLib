@@ -1,6 +1,6 @@
 #include "TestUtilities.h"
 #include "AuthCodeFlowTest.h"
-#include "../AuthorizationCodeGrant.h"
+#include <AuthorizationCodeGrant.h>
 #include "RequestSamples.h"
 
 using namespace OAuth2::AuthorizationCodeGrant;

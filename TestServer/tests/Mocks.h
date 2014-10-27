@@ -1,6 +1,6 @@
 #pragma once
-#include "../Types.h"
-#include "../Interfaces.h"
+#include <Types.h>
+#include <Interfaces.h>
 #include <map>
 #include <vector>
 //#include <set>
