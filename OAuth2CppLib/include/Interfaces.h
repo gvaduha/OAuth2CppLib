@@ -32,12 +32,12 @@ public:
 
 
 // Interface to HTTP request object to provide functions needed by subsystem
-class IHTTPRequest
+class IHttpRequest
 {
 public:
     // UniqueId of the request to be able to ask underlying subsystems to query additional
     // information corresponding to request (IP parameters, server variables, etc)
-    virtual string HttpUniqueId () const = 0;
+    //virtual string HttpUniqueId () const = 0;
 
     virtual string getVerb() const = 0;
     virtual bool isHeaderExist(const string &name) const = 0;
@@ -46,27 +46,27 @@ public:
     virtual string getParam(const string &name) const = 0;
     virtual string getURI() const = 0;
     virtual string getBody() const = 0;
-    virtual HttpCodeType getCode() const = 0;
-    virtual ~IHTTPRequest(){};
+    //??? virtual HttpCodeType getCode() const = 0;
+    virtual ~IHttpRequest(){};
 };
 
 // Interface to HTTP response object to provide functions needed by subsystem
-class IHTTPResponse
+class IHttpResponse
 {
 public:
     virtual void addHeader(string const &name, string const &value) = 0;
     virtual void addParam(string const &name, string const &value) = 0;
-    virtual void setURI(string const &uri) = 0;
+    //??? virtual void setURI(string const &uri) = 0;
     virtual void setBody(string const &body) = 0;
-    virtual void setCode(HttpCodeType code) = 0;
-    virtual ~IHTTPResponse(){};
+    virtual void setStatus(HttpStatusType status) = 0;
+    virtual ~IHttpResponse(){};
 };
 
 // Factory to create HTTP responses
 class IHttpResponseFactory
 {
 public:
-    virtual SharedPtr<IHTTPResponse>::Type Create() const = 0;
+    virtual SharedPtr<IHttpResponse>::Type Create() const = 0;
     virtual ~IHttpResponseFactory(){};
 };
 
@@ -106,15 +106,15 @@ public:
     // Gets user's credentials from request and return userId if authorized, else return EmptyUserId
     // Function has intimate knowledge about how external User Authentication subsystem 
     // store user or session information in request and how to get user id from it
-    virtual UserIdType authenticateUser(const IHTTPRequest &request) = 0;
+    virtual UserIdType authenticateUser(const IHttpRequest &request) = 0;
     // Create page for user Authentication
     // Saves information about referer page from request parameter
-    virtual SharedPtr<IHTTPResponse>::Type makeAuthenticationRequestPage(const IHTTPRequest &request) = 0;
+    virtual SharedPtr<IHttpResponse>::Type makeAuthenticationRequestPage(const IHttpRequest &request) = 0;
     // Endpoint for processing authentication request from page maked by makeAuthenticationRequestPage
     // Should authenticate user, then restart previous request saved by makeAuthenticationRequestPage including information about user Authentication
     // Function should include user authentication in the way external User Authentication subsystem does, to enable authenticateUser to grab this
     // information uniformely and not to trigger user logon message if user already logged in
-    virtual SharedPtr<IHTTPResponse>::Type processAuthenticationRequest(const IHTTPRequest &request) = 0;
+    virtual SharedPtr<IHttpResponse>::Type processAuthenticationRequest(const IHttpRequest &request) = 0;
     virtual ~IUserAuthenticationFacade(){};
 };
 
@@ -126,7 +126,7 @@ class IClientAuthenticationFacade
 public:
     // Gets client's credentials from request and return clientId if authorized, else return EmptyClientId
     // Check existance of record for client with credentials from request in AS store
-    virtual ClientIdType authenticateClient(const IHTTPRequest &request) = 0; //NO_THROW
+    virtual ClientIdType authenticateClient(const IHttpRequest &request) = 0; //NO_THROW
     virtual ~IClientAuthenticationFacade(){};
 };
 
@@ -142,10 +142,10 @@ public:
     virtual bool isClientAuthorizedByUser(const UserIdType &userId, const ClientIdType &clientId, const string &scope) const = 0; //NO_THROW
     // Create page for user Authorization of client request using request params and/or AS saved client params
     // Saves information about referer page from request parameter
-    virtual SharedPtr<IHTTPResponse>::Type makeAuthorizationRequestPage(const UserIdType &userId, const ClientIdType &clientId, const string &scope) const = 0; //NO_THROW
+    virtual SharedPtr<IHttpResponse>::Type makeAuthorizationRequestPage(const UserIdType &userId, const ClientIdType &clientId, const string &scope) const = 0; //NO_THROW
     // Endpoint for processing authorization request from page maked by makeAuthorizationRequestPage
     // Should save record for userId->clientId(URI,scope) grant, then restart previous request saved by makeAuthorizationRequestPage
-    virtual SharedPtr<IHTTPResponse>::Type processAuthorizationRequest(const IHTTPRequest& request) = 0; //NO_THROW
+    virtual SharedPtr<IHttpResponse>::Type processAuthorizationRequest(const IHttpRequest& request) = 0; //NO_THROW
     virtual ~IClientAuthorizationFacade(){};
 };
 
@@ -195,9 +195,9 @@ class IRequestProcessor
 {
 public:
     // Decide whether filter can process request
-    virtual bool canProcessRequest(const IHTTPRequest &request) const = 0;
+    virtual bool canProcessRequest(const IHttpRequest &request) const = 0;
     // Process request and reply with http response
-    virtual SharedPtr<IHTTPResponse>::Type processRequest(const IHTTPRequest &request) = 0;
+    virtual SharedPtr<IHttpResponse>::Type processRequest(const IHttpRequest &request) = 0;
 
     virtual ~IRequestProcessor(){};
 };
@@ -206,7 +206,7 @@ public:
 class IRequestFilter
 {
 public:
-    virtual void filter(IHTTPRequest &request) = 0;
+    virtual void filter(IHttpRequest &request) = 0;
     virtual ~IRequestFilter(){};
 };
 
@@ -214,7 +214,7 @@ public:
 class IResponseFilter
 {
 public:
-    virtual void filter(IHTTPRequest &request, IHTTPResponse &response) = 0;
+    virtual void filter(IHttpRequest &request, IHttpResponse &response) = 0;
     virtual ~IResponseFilter(){};
 };
 
@@ -279,10 +279,10 @@ public:
     };
 
     //  Init must be called before any access to Instance. SharedPtr should guarantee atomic operation.
-    static void init(SharedPtr<ServiceList>::Type services)
+    static void init(ServiceList* services)
     {
         services->checkForNullPtrs();
-        _impl = services;
+        _impl.swap(SharedPtr<ServiceList>::Type(services));
     };
 
 private:

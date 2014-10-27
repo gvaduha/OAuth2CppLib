@@ -44,15 +44,15 @@ public:
 
     virtual ~CodeRequestProcessor() {};
 
-    virtual bool canProcessRequest(const IHTTPRequest &request) const
+    virtual bool canProcessRequest(const IHttpRequest &request) const
     {
         return request.getParam("response_type") == "code";
     };
 
-    virtual SharedPtr<IHTTPResponse>::Type processRequest(const IHTTPRequest &request);
+    virtual SharedPtr<IHttpResponse>::Type processRequest(const IHttpRequest &request);
 
 private:
-    SharedPtr<IHTTPResponse>::Type makeAuthCodeResponse(const AuthCodeType &code, const string redirect_uri, const IHTTPRequest &request);
+    SharedPtr<IHttpResponse>::Type makeAuthCodeResponse(const AuthCodeType &code, const string redirect_uri, const IHttpRequest &request);
 };
 
 class TokenRequestProcessor : public IRequestProcessor
@@ -61,15 +61,15 @@ public:
     TokenRequestProcessor() {};
     virtual ~TokenRequestProcessor() {};
 
-    virtual bool canProcessRequest(const IHTTPRequest & request) const
+    virtual bool canProcessRequest(const IHttpRequest & request) const
     {
         return request.getParam("grant_type") == "authorization_code";
     };
 
-    virtual SharedPtr<IHTTPResponse>::Type processRequest(const IHTTPRequest& request);
+    virtual SharedPtr<IHttpResponse>::Type processRequest(const IHttpRequest& request);
 
 private:
-    SharedPtr<IHTTPResponse>::Type makeTokenResponse(/*const Token &code, */const IHTTPRequest &request);
+    SharedPtr<IHttpResponse>::Type makeTokenResponse(/*const Token &code, */const IHttpRequest &request);
 };
 
 };// namespace AuthorizationCodeGrant

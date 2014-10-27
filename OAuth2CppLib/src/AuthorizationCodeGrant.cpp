@@ -9,7 +9,7 @@ namespace AuthorizationCodeGrant
 
     using namespace Helpers;
 
-SharedPtr<IHTTPResponse>::Type CodeRequestProcessor::processRequest(const IHTTPRequest &request)
+SharedPtr<IHttpResponse>::Type CodeRequestProcessor::processRequest(const IHttpRequest &request)
 {
     // validation
     ClientIdType cid = request.getParam("client_id");
@@ -64,9 +64,9 @@ SharedPtr<IHTTPResponse>::Type CodeRequestProcessor::processRequest(const IHTTPR
     return makeAuthCodeResponse(code, uri, request);
 };
 
-SharedPtr<IHTTPResponse>::Type CodeRequestProcessor::makeAuthCodeResponse(const AuthCodeType &code, const string redirect_uri, const IHTTPRequest &request)
+SharedPtr<IHttpResponse>::Type CodeRequestProcessor::makeAuthCodeResponse(const AuthCodeType &code, const string redirect_uri, const IHttpRequest &request)
 {
-    SharedPtr<IHTTPResponse>::Type response = ServiceLocator::instance().HttpResponseFactory->Create();
+    SharedPtr<IHttpResponse>::Type response = ServiceLocator::instance().HttpResponseFactory->Create();
 
     if (request.isParamExist("state"))
         response->addParam("state", request.getParam("state"));
@@ -75,13 +75,13 @@ SharedPtr<IHTTPResponse>::Type CodeRequestProcessor::makeAuthCodeResponse(const 
 
     response->addHeader("Location", redirect_uri);
 
-    response->setCode(302);
+    response->setStatus(302);
 
     return response;
 };
 
 
-SharedPtr<IHTTPResponse>::Type TokenRequestProcessor::processRequest(const IHTTPRequest& request)
+SharedPtr<IHttpResponse>::Type TokenRequestProcessor::processRequest(const IHttpRequest& request)
 {
     ServiceLocator::ServiceList sl = ServiceLocator::instance();
     ClientIdType cid = sl.ClientAuthN->authenticateClient(request);
@@ -103,9 +103,9 @@ SharedPtr<IHTTPResponse>::Type TokenRequestProcessor::processRequest(const IHTTP
 };
 
 
-SharedPtr<IHTTPResponse>::Type TokenRequestProcessor::makeTokenResponse(/*const Token &code, */const IHTTPRequest &request)
+SharedPtr<IHttpResponse>::Type TokenRequestProcessor::makeTokenResponse(/*const Token &code, */const IHttpRequest &request)
 {
-    SharedPtr<IHTTPResponse>::Type response = ServiceLocator::instance().HttpResponseFactory->Create();
+    SharedPtr<IHttpResponse>::Type response = ServiceLocator::instance().HttpResponseFactory->Create();
 
     response->addHeader("Content-Type","application/json;charset=UTF-8");
     response->addHeader("Cache-Control","no-store");
@@ -118,7 +118,7 @@ SharedPtr<IHTTPResponse>::Type TokenRequestProcessor::makeTokenResponse(/*const 
     map.insert(jsonpair_t("refresh_token","XXXXX"));
 
     response->setBody(mapToJSON(map));
-    response->setCode(200);
+    response->setStatus(200);
 
     return response;
 };

@@ -52,12 +52,12 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\OAuth2CppLib\include;X:\poco-1.4.6p4\Util\include;X:\poco-1.4.6p4\Net\include;X:\poco-1.4.6p4\Foundation\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\OAuth2CppLib\include;$(POCO_ROOT)\Util\include;$(POCO_ROOT)\Net\include;$(POCO_ROOT)\Foundation\include;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>X:\poco-1.4.6p4\lib;..\lib;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(POCO_ROOT)\lib;..\lib;</AdditionalLibraryDirectories>
       <AdditionalDependencies>OAuth2CppLibd.lib;ws2_32.lib;iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -70,27 +70,28 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\OAuth2CppLib\include;X:\poco-1.4.6p4\Util\include;X:\poco-1.4.6p4\Net\include;X:\poco-1.4.6p4\Foundation\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\OAuth2CppLib\include;$(POCO_ROOT)\Util\include;$(POCO_ROOT)\Net\include;$(POCO_ROOT)\Foundation\include;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>X:\poco-1.4.6p4\lib;..\lib;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(POCO_ROOT)\lib;..\lib;</AdditionalLibraryDirectories>
       <AdditionalDependencies>OAuth2CppLibd.lib;ws2_32.lib;iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="MainTestsEntry.cpp" />
     <ClCompile Include="tests\AuthCodeFlowTest.cpp" />
     <ClCompile Include="tests\Mocks.cpp" />
     <ClCompile Include="PocoHttpTestServer.cpp" />
     <ClCompile Include="tests\TestEntities.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="PocoHelpers.h" />
     <ClInclude Include="tests\AuthCodeFlowTest.h" />
     <ClInclude Include="tests\Mocks.h" />
-    <ClInclude Include="PocoHttpTestServer.h" />
     <ClInclude Include="tests\RequestSamples.h" />
     <ClInclude Include="tests\TestEntities.h" />
     <ClInclude Include="tests\TestUtilities.h" />

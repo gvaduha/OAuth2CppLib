@@ -16,6 +16,7 @@
       <Filter>Tests</Filter>
     </ClCompile>
     <ClCompile Include="PocoHttpTestServer.cpp" />
+    <ClCompile Include="MainTestsEntry.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tests\TestUtilities.h">
@@ -33,6 +34,6 @@
     <ClInclude Include="tests\AuthCodeFlowTest.h">
       <Filter>Tests</Filter>
     </ClInclude>
-    <ClInclude Include="PocoHttpTestServer.h" />
+    <ClInclude Include="PocoHelpers.h" />
   </ItemGroup>
 </Project>

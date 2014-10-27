@@ -1,4 +1,5 @@
 #include <string>
+#include <sstream>
 
 #include <Poco/Net/HTTPServerParams.h>
 #include <Poco/Net/HTTPServer.h>
@@ -12,17 +13,35 @@
 #include <Poco/Util/ServerApplication.h>
 #include <Poco/URI.h>
 
+#include <Types.h>
+#include <OAuth2.h>
+#include <AuthorizationCodeGrant.h>
+
+#include "tests/Mocks.h"
+
 using namespace Poco;
 using namespace Poco::Util;
 using namespace Poco::Net;
+
+using namespace std;
+
+#include "PocoHelpers.h"
+
+
+static OAuth2::AuthorizationServer* g_as;
+
 
 class AuthEndpointHTTPRequestHandler : public HTTPRequestHandler
 {
 public:
     virtual void handleRequest(HTTPServerRequest & request, HTTPServerResponse & response)
     {
-		Application& app = Application::instance();
-		app.logger().information("Request from " + request.clientAddress().toString());
+        PocoHttpRequestAdapter rq(&request);
+
+        OAuth2::SharedPtr<OAuth2::IHttpResponse>::Type resp = g_as->authorizationEndpoint(rq);
+		
+        Application& app = Application::instance();
+        app.logger().information("Request from " + request.clientAddress().toString());
 
         response.setChunkedTransferEncoding(true);
 		response.setContentType("text/html");
@@ -31,7 +50,8 @@ public:
 		ostr << "<html><head><title>HTTPTimeServer powered by POCO C++ Libraries</title>";
 		//ostr << "<meta http-equiv=\"refresh\" content=\"1\"></head>";
 		ostr << "<body><p style=\"text-align: center; font-size: 48px;\">";
-		ostr << "AUTH";
+		
+        ostr << "AUTH";
 		ostr << "</p></body></html>";
     }
 };
@@ -96,9 +116,12 @@ protected:
 	}
 };
 
-
 int main(int argc, char** argv)
 {
+    initializeServiceLocator();
+
+    g_as = initializeAuth2Server();
+
 	MyHTTPServer app;
 	return app.run(argc, argv);
 }

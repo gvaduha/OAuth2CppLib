@@ -1,6 +1,6 @@
 //
 // ATTENTION
-// Consider that these helpers are using boost and C++11 syntax and 
+// Consider that these helpers DO USE boost and C++11 syntax and 
 // not intended to use as-is in conjunction with C++03 valid OAuth2 code
 //
 #include "Helpers.h"

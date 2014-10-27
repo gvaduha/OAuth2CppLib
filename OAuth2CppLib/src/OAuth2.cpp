@@ -20,10 +20,10 @@ using namespace Helpers;
 SharedPtr<ServiceLocator::ServiceList>::Type ServiceLocator::_impl = NULL;
 
 
-SharedPtr<IHTTPResponse>::Type make_error_response(const Errors::Type &error, const string &msg, const IHTTPRequest &request)
+SharedPtr<IHttpResponse>::Type make_error_response(const Errors::Type &error, const string &msg, const IHttpRequest &request)
 {
-    SharedPtr<IHTTPResponse>::Type response = ServiceLocator::instance().HttpResponseFactory->Create();
-    response->setCode(400);
+    SharedPtr<IHttpResponse>::Type response = ServiceLocator::instance().HttpResponseFactory->Create();
+    response->setStatus(400);
     
     jsonmap_t map;
     map.insert(jsonpair_t("error",error));
@@ -41,7 +41,7 @@ ServerEndpoint::ServerEndpoint(RequestFiltersQueueType *requestFilters, RequestP
 {};
 
 
-SharedPtr<IHTTPResponse>::Type ServerEndpoint::processRequest(IHTTPRequest &request) const
+SharedPtr<IHttpResponse>::Type ServerEndpoint::processRequest(IHttpRequest &request) const
 {
     // Preprocess request with filters
     //std::for_each(_requestFilters->begin(), _requestFilters->end(), std::bind2nd( std::mem_fun_ref( &IRequestFilter::filter ), request ));
@@ -49,14 +49,12 @@ SharedPtr<IHTTPResponse>::Type ServerEndpoint::processRequest(IHTTPRequest &requ
         (*it)->filter(request);
 
     // Choose request processor
-    request_can_be_processed_lambda r(request);
-
     RequestProcessorsQueueType::const_iterator it = find_if(_requestProcessors->begin(), _requestProcessors->end(), request_can_be_processed_lambda(request));
     
-    if (it != _requestProcessors->end()) // Didn't find filter
+    if (it == _requestProcessors->end()) // Didn't find filter
         return make_error_response(Errors::invalid_request, "", request);
 
-    SharedPtr<IHTTPResponse>::Type response;
+    SharedPtr<IHttpResponse>::Type response;
 
     response = (*it)->processRequest(request);
 

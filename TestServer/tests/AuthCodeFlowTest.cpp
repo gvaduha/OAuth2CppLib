@@ -17,7 +17,7 @@ void AuthCodeFlowTest::Setup(void)
 
 void AuthCodeFlowTest::TestFlow(void)
 {
-    SharedPtr<ServiceLocator::ServiceList>::Type list(new ServiceLocator::ServiceList());
+    ServiceLocator::ServiceList *list = new ServiceLocator::ServiceList();
     list->HttpResponseFactory = SharedPtr<HttpResponseFactoryMock>::Type(new HttpResponseFactoryMock());
     list->AuthorizationServerPolicies = SharedPtr<IAuthorizationServerPolicies>::Type (new StandardAuthorizationServerPolicies());
     list->UserAuthN = SharedPtr<IUserAuthenticationFacade>::Type (new UserAuthenticationFacadeMock());
@@ -44,7 +44,7 @@ void AuthCodeFlowTest::TestFlow(void)
     assert(!crp.canProcessRequest(*_samples.Bad1));
     assert(crp.canProcessRequest(*_samples.Good1));
 
-    SharedPtr<IHTTPResponse>::Type response = crp.processRequest(*_samples.Empty);
+    SharedPtr<IHttpResponse>::Type response = crp.processRequest(*_samples.Empty);
     
     HTTPRequestResponseMock* r = dynamic_cast<HTTPRequestResponseMock*>(response.get());
     assert(r->getBody() == "{\"error\":\"invalid_request\"}");

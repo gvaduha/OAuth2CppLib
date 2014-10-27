@@ -1,11 +1,13 @@
 #pragma once
+#include "Types.h"
 #include "Constants.h"
+#include "Interfaces.h"
 #include <list>
 
 namespace OAuth2
 {
 ///****************** UNCHARTED
-SharedPtr<IHTTPResponse>::Type make_error_response(const Errors::Type &error, const string &msg, const IHTTPRequest &request);
+SharedPtr<IHttpResponse>::Type make_error_response(const Errors::Type &error, const string &msg, const IHttpRequest &request);
 ///****************** UNCHARTED
 
 
@@ -35,21 +37,21 @@ public:
     typedef std::list<SharedPtr<IResponseFilter>::Type> ResponseFiltersQueueType;
 
 private:
-    RequestProcessorsQueueType *_requestProcessors;
-    RequestFiltersQueueType *_requestFilters;
-    ResponseFiltersQueueType *_responseFilters;
+    SharedPtr<RequestProcessorsQueueType>::Type _requestProcessors;
+    SharedPtr<RequestFiltersQueueType>::Type _requestFilters;
+    SharedPtr<ResponseFiltersQueueType>::Type _responseFilters;
     
 
     struct request_can_be_processed_lambda : std::unary_function<IRequestProcessor, bool>
     {
-        request_can_be_processed_lambda(const IHTTPRequest &request)
+        request_can_be_processed_lambda(const IHttpRequest &request)
             : _request(request)
         {};
 
-        bool operator()(SharedPtr<IRequestProcessor>::Type filter) const { return filter->canProcessRequest(_request); }
+        bool operator()(const SharedPtr<IRequestProcessor>::Type &filter) const { return filter->canProcessRequest(_request); }
 
     private:
-        const IHTTPRequest& _request;
+        const IHttpRequest& _request;
     };
 
 public:
@@ -59,7 +61,7 @@ public:
     // first request preprocessing by set of request filters, than processor selected 
     // depending on request and finally response processed by filters
     // request param can be changed by filters, so parmeter should be copied before call
-    SharedPtr<IHTTPResponse>::Type processRequest(IHTTPRequest &request) const;
+    SharedPtr<IHttpResponse>::Type processRequest(IHttpRequest &request) const;
 
     // All push functions are NOT thread safe because no runtime Endpoint addition expected
     inline void pushFrontRequestFilter(IRequestFilter *filter)
@@ -93,11 +95,7 @@ public:
     };
 
     ~ServerEndpoint()
-    {
-        delete _requestFilters;
-        delete _requestProcessors;
-        delete _responseFilters;
-    };
+    {};
 
 private:
     ServerEndpoint(const ServerEndpoint &);
@@ -109,28 +107,25 @@ private:
 class AuthorizationServer
 {
 private:
-    ServerEndpoint* _authorizationEndpoint;
-    ServerEndpoint* _tokenEndpoint;
+    SharedPtr<ServerEndpoint>::Type _authorizationEndpoint;
+    SharedPtr<ServerEndpoint>::Type _tokenEndpoint;
 public:
     AuthorizationServer(ServerEndpoint* authorizationEndpoint, ServerEndpoint* tokenEndpoint)
         : _authorizationEndpoint(authorizationEndpoint), _tokenEndpoint(tokenEndpoint)
     {}
 
-    SharedPtr<IHTTPResponse>::Type authorizationEndpoint(IHTTPRequest &request) const
+    SharedPtr<IHttpResponse>::Type authorizationEndpoint(IHttpRequest &request) const
     {
         return _authorizationEndpoint->processRequest(request);
     };
 
-    SharedPtr<IHTTPResponse>::Type tokenEndpoint(IHTTPRequest &request) const
+    SharedPtr<IHttpResponse>::Type tokenEndpoint(IHttpRequest &request) const
     {
         return _tokenEndpoint->processRequest(request);
     };
 
     ~AuthorizationServer()
-    {
-        delete _authorizationEndpoint;
-        delete _tokenEndpoint;
-    };
+    {};
 private:
     AuthorizationServer(const AuthorizationServer &);
     AuthorizationServer & operator=(const AuthorizationServer &);

@@ -78,7 +78,7 @@ public:
 };
 
 
-class HTTPRequestResponseMock : public IHTTPRequest, public IHTTPResponse
+class HTTPRequestResponseMock : public IHttpRequest, public IHttpResponse
 {
 public:
     typedef std::map<std::string,std::string> MapType;
@@ -89,7 +89,7 @@ private:
     string _uri;
     string _body;
     string _verb;
-    HttpCodeType _code;
+    HttpStatusType _status;
 
 public:
     HTTPRequestResponseMock() {};
@@ -104,21 +104,21 @@ public:
     virtual string getParam(const string &name) const  { return _params[name]; }; //should switch by HTTP verb
     virtual string getURI() const { return _uri; };
     virtual string getBody() const {return _body;};
-    virtual HttpCodeType getCode() const {return _code;};
-    virtual string HttpUniqueId () const { return "XXX"; };
+    virtual HttpStatusType getCode() const {return _status;};
+    //virtual string HttpUniqueId () const { return "XXX"; };
 
     //Response
     virtual void addHeader(string const &name, string const &value) {_headers[name]=value;};
     virtual void addParam(const string &name, const string &value) {_params[name]=value;};
     virtual void setURI(string const &uri) {_uri =uri;};
     virtual void setBody(string const &body) {_body = body;};
-    virtual void setCode(HttpCodeType code) {_code = code;};
+    virtual void setStatus(HttpStatusType status) {_status = status;};
 };
 
 class HttpResponseFactoryMock : public IHttpResponseFactory
 {
 public:
-    virtual SharedPtr<IHTTPResponse>::Type Create() const {return SharedPtr<IHTTPResponse>::Type(new HTTPRequestResponseMock());};
+    virtual SharedPtr<IHttpResponse>::Type Create() const {return SharedPtr<IHttpResponse>::Type(new HTTPRequestResponseMock());};
 };
 
 
@@ -129,17 +129,17 @@ public:
     static const string AuthPageBody;
     static const string UserIdParamName;
 
-    virtual UserIdType authenticateUser(const IHTTPRequest &request)
+    virtual UserIdType authenticateUser(const IHttpRequest &request)
     { 
         return request.getParam(UserAuthenticationFacadeMock::UserIdParamName);
     };
-    virtual SharedPtr<IHTTPResponse>::Type makeAuthenticationRequestPage(const IHTTPRequest &request)
+    virtual SharedPtr<IHttpResponse>::Type makeAuthenticationRequestPage(const IHttpRequest &request)
     {
-        SharedPtr<IHTTPResponse>::Type response = ServiceLocator::instance().HttpResponseFactory->Create();
+        SharedPtr<IHttpResponse>::Type response = ServiceLocator::instance().HttpResponseFactory->Create();
         response->setBody(UserAuthenticationFacadeMock::AuthPageBody);
         return response;
     };
-    virtual SharedPtr<IHTTPResponse>::Type processAuthenticationRequest(const IHTTPRequest &request)
+    virtual SharedPtr<IHttpResponse>::Type processAuthenticationRequest(const IHttpRequest &request)
     {
         throw std::logic_error("it's external subsystem entrails behaviour! move back!");
     };
@@ -159,13 +159,13 @@ public:
     {
         return true; // userId == "";
     };
-    virtual SharedPtr<IHTTPResponse>::Type makeAuthorizationRequestPage(const UserIdType &userId, const ClientIdType &clientId, const string &scope) const
+    virtual SharedPtr<IHttpResponse>::Type makeAuthorizationRequestPage(const UserIdType &userId, const ClientIdType &clientId, const string &scope) const
     {
-        SharedPtr<IHTTPResponse>::Type response = ServiceLocator::instance().HttpResponseFactory->Create();
+        SharedPtr<IHttpResponse>::Type response = ServiceLocator::instance().HttpResponseFactory->Create();
         response->setBody(UserAuthenticationFacadeMock::AuthPageBody);
         return response;
     };
-    virtual SharedPtr<IHTTPResponse>::Type processAuthorizationRequest(const IHTTPRequest& request)
+    virtual SharedPtr<IHttpResponse>::Type processAuthorizationRequest(const IHttpRequest& request)
     {
         throw std::logic_error("not implemented YET!");
     };
@@ -213,6 +213,18 @@ public:
         return true;
     };
     virtual ~AuthorizationCodeGeneratorMock(){};
+};
+
+
+class ClientAuthenticationFacadeMock : public IClientAuthenticationFacade
+{
+public:
+    virtual ClientIdType authenticateClient(const IHttpRequest &request)
+    {
+        return "ClientID";
+    }
+
+    virtual ~ClientAuthenticationFacadeMock(){};
 };
 
 
