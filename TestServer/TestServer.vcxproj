@@ -82,15 +82,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="MainTestsEntry.cpp" />
+    <ClCompile Include="Main.cpp" />
     <ClCompile Include="tests\AuthCodeFlowTest.cpp" />
     <ClCompile Include="tests\Mocks.cpp" />
     <ClCompile Include="PocoHttpTestServer.cpp" />
-    <ClCompile Include="tests\TestEntities.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PocoHelpers.h" />
+    <ClInclude Include="PocoHttpTestServer.h" />
     <ClInclude Include="tests\AuthCodeFlowTest.h" />
+    <ClInclude Include="tests\AuthorizationMocks.h" />
     <ClInclude Include="tests\Mocks.h" />
     <ClInclude Include="tests\RequestSamples.h" />
     <ClInclude Include="tests\TestEntities.h" />

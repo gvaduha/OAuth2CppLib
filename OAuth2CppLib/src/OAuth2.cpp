@@ -20,18 +20,16 @@ using namespace Helpers;
 SharedPtr<ServiceLocator::ServiceList>::Type ServiceLocator::_impl = NULL;
 
 
-SharedPtr<IHttpResponse>::Type make_error_response(const Errors::Type &error, const string &msg, const IHttpRequest &request)
+void make_error_response(const Errors::Code error, const string &msg, const IHttpRequest &request, IHttpResponse &response)
 {
-    SharedPtr<IHttpResponse>::Type response = ServiceLocator::instance().HttpResponseFactory->Create();
-    response->setStatus(400);
+    response.setStatus(400);
+    response.addHeader("Content-type","application/json; charset=utf-8");
     
     jsonmap_t map;
-    map.insert(jsonpair_t("error",error));
+    map.insert(jsonpair_t("error",Errors::getText(error)));
     map.insert(jsonpair_t("error_description",msg));
 
-    response->setBody(mapToJSON(map));
-
-    return response;
+    response.setBody(mapToJSON(map));
 };
 
 
@@ -41,7 +39,7 @@ ServerEndpoint::ServerEndpoint(RequestFiltersQueueType *requestFilters, RequestP
 {};
 
 
-SharedPtr<IHttpResponse>::Type ServerEndpoint::processRequest(IHttpRequest &request) const
+Errors::Code ServerEndpoint::processRequest(IHttpRequest &request, IHttpResponse &response) const
 {
     // Preprocess request with filters
     //std::for_each(_requestFilters->begin(), _requestFilters->end(), std::bind2nd( std::mem_fun_ref( &IRequestFilter::filter ), request ));
@@ -52,18 +50,19 @@ SharedPtr<IHttpResponse>::Type ServerEndpoint::processRequest(IHttpRequest &requ
     RequestProcessorsQueueType::const_iterator it = find_if(_requestProcessors->begin(), _requestProcessors->end(), request_can_be_processed_lambda(request));
     
     if (it == _requestProcessors->end()) // Didn't find filter
-        return make_error_response(Errors::invalid_request, "", request);
+    {
+        make_error_response(Errors::Code::unsupported_grant_type, "don't find appropriate request processor", request, response);
+        return Errors::Code::unsupported_grant_type;
+    }
 
-    SharedPtr<IHttpResponse>::Type response;
-
-    response = (*it)->processRequest(request);
+    Errors::Code ret = (*it)->processRequest(request, response);
 
     // Postprocess response with filters
     //std::for_each(_responseFilters->begin(), _responseFilters->end(), std::bind2nd( std::mem_fun_ref( &IResponseFilter::filter ), response ));
     for(ResponseFiltersQueueType::const_iterator it = _responseFilters->begin(); it != _responseFilters->end(); ++it)
-        (*it)->filter(request, *response);
+        (*it)->filter(request, response);
 
-    return response;
+    return ret;
 };
 // ***** ServerEndpoint end *****
 

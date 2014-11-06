@@ -7,7 +7,7 @@
 namespace OAuth2
 {
 ///****************** UNCHARTED
-SharedPtr<IHttpResponse>::Type make_error_response(const Errors::Type &error, const string &msg, const IHttpRequest &request);
+void make_error_response(const Errors::Code error, const string &msg, const IHttpRequest &request, IHttpResponse &response);
 ///****************** UNCHARTED
 
 
@@ -48,7 +48,10 @@ private:
             : _request(request)
         {};
 
-        bool operator()(const SharedPtr<IRequestProcessor>::Type &filter) const { return filter->canProcessRequest(_request); }
+        bool operator()(const SharedPtr<IRequestProcessor>::Type &filter) const
+        { 
+            return filter->canProcessRequest(_request); 
+        }
 
     private:
         const IHttpRequest& _request;
@@ -61,7 +64,7 @@ public:
     // first request preprocessing by set of request filters, than processor selected 
     // depending on request and finally response processed by filters
     // request param can be changed by filters, so parmeter should be copied before call
-    SharedPtr<IHttpResponse>::Type processRequest(IHttpRequest &request) const;
+    Errors::Code processRequest(IHttpRequest &request, IHttpResponse &response) const;
 
     // All push functions are NOT thread safe because no runtime Endpoint addition expected
     inline void pushFrontRequestFilter(IRequestFilter *filter)
@@ -114,14 +117,14 @@ public:
         : _authorizationEndpoint(authorizationEndpoint), _tokenEndpoint(tokenEndpoint)
     {}
 
-    SharedPtr<IHttpResponse>::Type authorizationEndpoint(IHttpRequest &request) const
+    Errors::Code authorizationEndpoint(IHttpRequest &request, IHttpResponse &response) const
     {
-        return _authorizationEndpoint->processRequest(request);
+        return _authorizationEndpoint->processRequest(request, response);
     };
 
-    SharedPtr<IHttpResponse>::Type tokenEndpoint(IHttpRequest &request) const
+    Errors::Code tokenEndpoint(IHttpRequest &request, IHttpResponse &response) const
     {
-        return _tokenEndpoint->processRequest(request);
+        return _tokenEndpoint->processRequest(request, response);
     };
 
     ~AuthorizationServer()

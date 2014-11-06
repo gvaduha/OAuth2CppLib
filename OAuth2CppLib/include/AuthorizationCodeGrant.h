@@ -49,10 +49,10 @@ public:
         return request.getParam("response_type") == "code";
     };
 
-    virtual SharedPtr<IHttpResponse>::Type processRequest(const IHttpRequest &request);
+    virtual Errors::Code processRequest(const IHttpRequest &request, IHttpResponse &response);
 
 private:
-    SharedPtr<IHttpResponse>::Type makeAuthCodeResponse(const AuthCodeType &code, const string redirect_uri, const IHttpRequest &request);
+    void makeAuthCodeResponse(const AuthCodeType &code, const string redirect_uri, const IHttpRequest &request, IHttpResponse &response);
 };
 
 class TokenRequestProcessor : public IRequestProcessor
@@ -66,10 +66,10 @@ public:
         return request.getParam("grant_type") == "authorization_code";
     };
 
-    virtual SharedPtr<IHttpResponse>::Type processRequest(const IHttpRequest& request);
+    virtual Errors::Code processRequest(const IHttpRequest &request, IHttpResponse &response);
 
 private:
-    SharedPtr<IHttpResponse>::Type makeTokenResponse(/*const Token &code, */const IHttpRequest &request);
+    void makeTokenResponse(/*const Token &code, */const IHttpRequest &request, IHttpResponse &response);
 };
 
 };// namespace AuthorizationCodeGrant

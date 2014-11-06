@@ -1,5 +1,11 @@
-﻿#pragma once
+﻿
+//HACK:
+//TODO:  MAKE SWEEP AND REMOVE CLASSES FROM HERE!!!!
+//HACK:
+
+#pragma once
 #include "Types.h"
+#include "Constants.h"
 #include <map>
 
 namespace OAuth2
@@ -46,7 +52,6 @@ public:
     virtual string getParam(const string &name) const = 0;
     virtual string getURI() const = 0;
     virtual string getBody() const = 0;
-    //??? virtual HttpCodeType getCode() const = 0;
     virtual ~IHttpRequest(){};
 };
 
@@ -55,21 +60,11 @@ class IHttpResponse
 {
 public:
     virtual void addHeader(string const &name, string const &value) = 0;
-    virtual void addParam(string const &name, string const &value) = 0;
-    //??? virtual void setURI(string const &uri) = 0;
     virtual void setBody(string const &body) = 0;
     virtual void setStatus(HttpStatusType status) = 0;
+    virtual string formatUriParameters(std::map<string,string> params) const = 0;
     virtual ~IHttpResponse(){};
 };
-
-// Factory to create HTTP responses
-class IHttpResponseFactory
-{
-public:
-    virtual SharedPtr<IHttpResponse>::Type Create() const = 0;
-    virtual ~IHttpResponseFactory(){};
-};
-
 
 // Abstract token factory
 template<typename T>
@@ -109,12 +104,12 @@ public:
     virtual UserIdType authenticateUser(const IHttpRequest &request) = 0;
     // Create page for user Authentication
     // Saves information about referer page from request parameter
-    virtual SharedPtr<IHttpResponse>::Type makeAuthenticationRequestPage(const IHttpRequest &request) = 0;
+    virtual void makeAuthenticationRequestPage(const IHttpRequest &request, IHttpResponse &response) = 0;
     // Endpoint for processing authentication request from page maked by makeAuthenticationRequestPage
     // Should authenticate user, then restart previous request saved by makeAuthenticationRequestPage including information about user Authentication
     // Function should include user authentication in the way external User Authentication subsystem does, to enable authenticateUser to grab this
     // information uniformely and not to trigger user logon message if user already logged in
-    virtual SharedPtr<IHttpResponse>::Type processAuthenticationRequest(const IHttpRequest &request) = 0;
+    virtual Errors::Code processAuthenticationRequest(const IHttpRequest &request, IHttpResponse &response) = 0;
     virtual ~IUserAuthenticationFacade(){};
 };
 
@@ -142,24 +137,12 @@ public:
     virtual bool isClientAuthorizedByUser(const UserIdType &userId, const ClientIdType &clientId, const string &scope) const = 0; //NO_THROW
     // Create page for user Authorization of client request using request params and/or AS saved client params
     // Saves information about referer page from request parameter
-    virtual SharedPtr<IHttpResponse>::Type makeAuthorizationRequestPage(const UserIdType &userId, const ClientIdType &clientId, const string &scope) const = 0; //NO_THROW
+    virtual void makeAuthorizationRequestPage(const UserIdType &userId, const ClientIdType &clientId, 
+                                                const string &scope, const string &redirect_uri, IHttpResponse &response) const = 0; //NO_THROW
     // Endpoint for processing authorization request from page maked by makeAuthorizationRequestPage
     // Should save record for userId->clientId(URI,scope) grant, then restart previous request saved by makeAuthorizationRequestPage
-    virtual SharedPtr<IHttpResponse>::Type processAuthorizationRequest(const IHttpRequest& request) = 0; //NO_THROW
+    virtual Errors::Code processAuthorizationRequest(const IHttpRequest& request, IHttpResponse &response) = 0; //NO_THROW
     virtual ~IClientAuthorizationFacade(){};
-};
-
-
-// Storage abstraction
-template<typename T>
-class IStorage
-{
-public:
-    virtual T create(T &o) = 0;
-    virtual T load(const IdType &id) = 0;
-    virtual T update(T &o) = 0;
-    virtual void remove(const IdType &id) = 0;
-    virtual ~IStorage(){};
 };
 
 
@@ -172,7 +155,6 @@ public:
     string RedirectUri;
     string Scope;
 };
-
 //static const Client EmptyClient;
 
 // Set of policies to apply inside AS
@@ -197,7 +179,7 @@ public:
     // Decide whether filter can process request
     virtual bool canProcessRequest(const IHttpRequest &request) const = 0;
     // Process request and reply with http response
-    virtual SharedPtr<IHttpResponse>::Type processRequest(const IHttpRequest &request) = 0;
+    virtual Errors::Code processRequest(const IHttpRequest &request, IHttpResponse &response) = 0;
 
     virtual ~IRequestProcessor(){};
 };
@@ -217,6 +199,7 @@ public:
     virtual void filter(IHttpRequest &request, IHttpResponse &response) = 0;
     virtual ~IResponseFilter(){};
 };
+
 
 // Generate codes for Authorization Code Grant Flow
 // RFC states that for token request redirect_uri is required if specified in code request
@@ -241,6 +224,19 @@ public:
     virtual ~IAuthorizationCodeGenerator(){};
 };
 
+//HACK: Is it needed?
+// Storage abstraction
+template<typename T>
+class IStorage
+{
+public:
+    virtual T create(T &o) = 0;
+    virtual T load(const IdType &id) = 0;
+    virtual T update(T &o) = 0;
+    virtual void remove(const IdType &id) = 0;
+    virtual ~IStorage(){};
+};
+
 // Holder of all services required to process messages
 class ServiceLocator
 {
@@ -252,16 +248,14 @@ public:
         SharedPtr<IClientAuthenticationFacade>::Type ClientAuthN;
         SharedPtr<IAuthorizationCodeGenerator>::Type AuthCodeGen;
         SharedPtr<IStorage<SharedPtr<Client>::Type> >::Type ClientStorage;
-        SharedPtr<IHttpResponseFactory>::Type HttpResponseFactory;
         SharedPtr<IAuthorizationServerPolicies>::Type AuthorizationServerPolicies;
         //typename SharedPtr<ITokenFactory<typename TToken> >::Type TokenFactory;
 
-        // Fragile code! Should be revised every time ServiceList changed!
+        //FRAGILE CODE: Should be revised every time ServiceList changed!
         void checkForNullPtrs()
         {
             if (!this->AuthCodeGen ||  !this->AuthorizationServerPolicies || !this->ClientAuthN
-                || !this->ClientAuthZ || !this->ClientStorage || !this->HttpResponseFactory
-                || !this->UserAuthN)
+                || !this->ClientAuthZ || !this->ClientStorage || !this->UserAuthN)
                 throw AuthorizationException("Can't initialize ServiceLocator with null values");
         };
     };
@@ -291,13 +285,5 @@ private:
     ServiceLocator(const ServiceLocator &);
 };
 
-
-//// TODEL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-////// MUST BE REDONE 4 DIFFERENT TYPE OF AUTH REQUEST (MAC?)
-//struct IClientAuthenticator
-//{
-//    virtual bool Authenticate(string const &name, string const &password) const = 0;
-//    virtual ~IClientAuthenticator(){};
-//};
 
 }; //namespace OAuth2

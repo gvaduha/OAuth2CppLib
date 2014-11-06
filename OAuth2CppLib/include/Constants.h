@@ -6,6 +6,9 @@
 
 namespace OAuth2
 {
+
+    extern const UserIdType EmptyUser;
+
 namespace Params
 {
     typedef string Type;
@@ -30,18 +33,33 @@ namespace Params
     //OAUTH_STRING_CONST();
 }; //namespace Params
 
-namespace Errors
+namespace Errors //FRAGILE CODE: be carefull to add values to both enum and Text static string array (in .cpp)
 {
-    typedef string Type;
+    enum Code //RFC6749 5.2 
+    {
+        ok = 0
+        ,invalid_request
+        ,invalid_client
+        ,invalid_grant
+        ,unauthorized_client
+        ,unsupported_grant_type
+        ,invalid_scope
+        ,access_denied              //RFC6749 4.1.2.1
+        ,unsupported_response_type  //RFC6749 4.1.2.1
+        ,server_error               //RFC6749 4.1.2.1
+        ,temporarily_unavailable    //RFC6749 4.1.2.1
+    };
 
-    OAUTH_STRING_CONST(invalid_request);
-    OAUTH_STRING_CONST(unauthorized_client);
-    OAUTH_STRING_CONST(access_denied);
-    OAUTH_STRING_CONST(unsupported_response_type);
-    OAUTH_STRING_CONST(invalid_scope);
-    OAUTH_STRING_CONST(server_error);
-    OAUTH_STRING_CONST(temporarily_unavailable);
-    //OAUTH_STRING_CONST();
+    string getText(const Code code);
+
+    struct Text
+    {
+        friend string getText(Code);
+
+    protected:
+       static string enumtext[];
+    };
+
 }; //namespace Errors
 
 }; //namespace OAuth2

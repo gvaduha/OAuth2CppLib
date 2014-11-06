@@ -4,6 +4,7 @@
     <ClCompile Include="src\AuthorizationCodeGrant.cpp" />
     <ClCompile Include="src\Helpers.cpp" />
     <ClCompile Include="src\OAuth2.cpp" />
+    <ClCompile Include="src\Constants.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Helpers.h" />

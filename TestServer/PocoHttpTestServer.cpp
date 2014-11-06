@@ -1,34 +1,16 @@
-#include <string>
 #include <sstream>
 
-#include <Poco/Net/HTTPServerParams.h>
-#include <Poco/Net/HTTPServer.h>
-#include <Poco/Net/ServerSocket.h>
-#include <Poco/Net/HTTPRequestHandler.h>
-#include <Poco/Net/HTTPServerRequest.h>
-#include <Poco/Net/HTTPServerResponse.h>
-#include <Poco/Thread.h>
-#include <Poco/String.h>
-#include <Poco/Util/Application.h>
-#include <Poco/Util/ServerApplication.h>
+#include "PocoHttpTestServer.h"
 #include <Poco/URI.h>
+#include "PocoHelpers.h"
+
+#include "tests/AuthorizationMocks.h"
 
 #include <Types.h>
 #include <OAuth2.h>
 #include <AuthorizationCodeGrant.h>
 
-#include "tests/Mocks.h"
-
-using namespace Poco;
-using namespace Poco::Util;
-using namespace Poco::Net;
-
-using namespace std;
-
-#include "PocoHelpers.h"
-
-
-static OAuth2::AuthorizationServer* g_as;
+static OAuth2::SharedPtr<OAuth2::AuthorizationServer>::Type g_as;
 
 
 class AuthEndpointHTTPRequestHandler : public HTTPRequestHandler
@@ -36,23 +18,17 @@ class AuthEndpointHTTPRequestHandler : public HTTPRequestHandler
 public:
     virtual void handleRequest(HTTPServerRequest & request, HTTPServerResponse & response)
     {
-        PocoHttpRequestAdapter rq(&request);
-
-        OAuth2::SharedPtr<OAuth2::IHttpResponse>::Type resp = g_as->authorizationEndpoint(rq);
-		
         Application& app = Application::instance();
-        app.logger().information("Request from " + request.clientAddress().toString());
+        app.logger().information("Authorization request from " + request.clientAddress().toString());
 
-        response.setChunkedTransferEncoding(true);
-		response.setContentType("text/html");
+        //Poco::Net::NameValueCollection cookies;
+        //request.getCookies(cookies);
+        //response.getCookies(cookies.begin());
 
-		std::ostream& ostr = response.send();
-		ostr << "<html><head><title>HTTPTimeServer powered by POCO C++ Libraries</title>";
-		//ostr << "<meta http-equiv=\"refresh\" content=\"1\"></head>";
-		ostr << "<body><p style=\"text-align: center; font-size: 48px;\">";
-		
-        ostr << "AUTH";
-		ostr << "</p></body></html>";
+        PocoHttpRequestAdapter rq(&request);
+        PocoHttpResponseAdapter rs(&response);
+
+        g_as->authorizationEndpoint(rq,rs);
     }
 };
 
@@ -61,67 +37,104 @@ class TokenEndpointHTTPRequestHandler : public HTTPRequestHandler
 public:
     virtual void handleRequest(HTTPServerRequest & request, HTTPServerResponse & response)
     {
-		Application& app = Application::instance();
-		app.logger().information("Request from " + request.clientAddress().toString());
+		Application::instance().logger().information("Token request from " + request.clientAddress().toString());
 
-        response.setChunkedTransferEncoding(true);
-		response.setContentType("text/html");
+        PocoHttpRequestAdapter rq(&request);
+        PocoHttpResponseAdapter rs(&response);
 
-		std::ostream& ostr = response.send();
-		ostr << "<html><head><title>HTTPTimeServer powered by POCO C++ Libraries</title>";
-		//ostr << "<meta http-equiv=\"refresh\" content=\"1\"></head>";
-		ostr << "<body><p style=\"text-align: center; font-size: 48px;\">";
-		ostr << "TOKEN";
-		ostr << "</p></body></html>";
+        g_as->tokenEndpoint(rq,rs);
     }
 };
 
-class MyRequestHandlerFactory : public HTTPRequestHandlerFactory
+class AuthenticationEndpointHTTPRequestHandler : public HTTPRequestHandler
 {
 public:
-    MyRequestHandlerFactory(){}
-    HTTPRequestHandler* createRequestHandler(const HTTPServerRequest& request)
+    virtual void handleRequest(HTTPServerRequest & request, HTTPServerResponse & response)
     {
-        //const std::string method = request.getMethod();
-        //if (icompare(method,"get") == 0 || icompare(method,"post") == 0)
+		Application::instance().logger().information("Authentication request from " + request.clientAddress().toString());
 
-        URI uri(request.getURI());
+        PocoHttpRequestAdapter rq(&request);
+        PocoHttpResponseAdapter rs(&response);
 
-        if (icompare(uri.getPath(),"/auth") == 0)
-        {
-            return new AuthEndpointHTTPRequestHandler;
-        }
-        else if (icompare(uri.getPath(),"/token") == 0)
-        {
-            return new TokenEndpointHTTPRequestHandler;
-        }
-
-        return 0;
+        OAuth2::ServiceLocator::instance().UserAuthN->processAuthenticationRequest(rq, rs);
     }
 };
 
-class MyHTTPServer: public Poco::Util::ServerApplication
+HTTPRequestHandler* MyRequestHandlerFactory::createRequestHandler(const HTTPServerRequest& request)
 {
-protected:
-	int main(const std::vector<std::string>& args)
-	{
-        ServerSocket svs(88);
-        HTTPServer srv(new MyRequestHandlerFactory, svs, new HTTPServerParams);
+    //const std::string method = request.getMethod();
+    //if (icompare(method,"get") == 0 || icompare(method,"post") == 0)
 
-        srv.start();
-        waitForTerminationRequest();
-        srv.stop();
-        
-        return Application::EXIT_OK;
-	}
-};
+    URI uri(request.getURI());
 
-int main(int argc, char** argv)
+    if (icompare(uri.getPath(),"/authorize") == 0)
+    {
+        return new AuthEndpointHTTPRequestHandler;
+    }
+    else if (icompare(uri.getPath(),"/token") == 0)
+    {
+        return new TokenEndpointHTTPRequestHandler;
+    }
+    else if (icompare(uri.getPath(),"/authenticate") == 0)
+    {
+        return new AuthenticationEndpointHTTPRequestHandler;
+    }
+
+    return 0;
+}
+
+void initializeAuth2Server()
+{
+    using namespace OAuth2;
+
+    ServerEndpoint::RequestFiltersQueueType* authRequestFilters = new ServerEndpoint::RequestFiltersQueueType();
+    ServerEndpoint::ResponseFiltersQueueType* authResponseFilters = new ServerEndpoint::ResponseFiltersQueueType();
+    ServerEndpoint::RequestProcessorsQueueType* authRequestProcessors = new ServerEndpoint::RequestProcessorsQueueType();
+    
+    authRequestProcessors->push_back(OAuth2::SharedPtr<IRequestProcessor>::Type(new AuthorizationCodeGrant::CodeRequestProcessor()));
+    
+    ServerEndpoint* authep = new ServerEndpoint(authRequestFilters, authRequestProcessors, authResponseFilters);
+    
+    ServerEndpoint::RequestFiltersQueueType* tokenRequestFilters = new ServerEndpoint::RequestFiltersQueueType();
+    ServerEndpoint::ResponseFiltersQueueType* tokenResponseFilters = new ServerEndpoint::ResponseFiltersQueueType();
+    ServerEndpoint::RequestProcessorsQueueType* tokenRequestProcessors = new ServerEndpoint::RequestProcessorsQueueType();
+    
+    tokenRequestProcessors->push_back(OAuth2::SharedPtr<IRequestProcessor>::Type(new AuthorizationCodeGrant::TokenRequestProcessor()));
+    
+    ServerEndpoint* tokenep = new ServerEndpoint(tokenRequestFilters, tokenRequestProcessors, tokenResponseFilters);
+    
+    g_as = OAuth2::SharedPtr<OAuth2::AuthorizationServer>::Type( new AuthorizationServer(authep, tokenep) );
+}
+
+
+void initializeServiceLocator()
+{
+    using namespace OAuth2;
+    using namespace OAuth2::Test;
+
+    ServiceLocator::ServiceList *list = new ServiceLocator::ServiceList();
+
+    list->AuthorizationServerPolicies = OAuth2::SharedPtr<IAuthorizationServerPolicies>::Type (new StandardAuthorizationServerPolicies());
+    list->UserAuthN = OAuth2::SharedPtr<IUserAuthenticationFacade>::Type (new UserAuthenticationFacadeMock("User123",true));
+    list->ClientAuthZ = OAuth2::SharedPtr<IClientAuthorizationFacade>::Type (new ClientAuthorizationFacadeMock());
+    list->AuthCodeGen = OAuth2::SharedPtr<IAuthorizationCodeGenerator>::Type (new AuthorizationCodeGeneratorMock());
+    
+    MemoryStorageMock<typename OAuth2::SharedPtr<Client>::Type> *pMemStorage = new MemoryStorageMock<typename OAuth2::SharedPtr<Client>::Type>();
+
+    Client *c = new Client(); c->Id = "01234"; c->RedirectUri = ""; c->Secret = "abc"; c->Scope = "one two three four";
+    pMemStorage->create(OAuth2::SharedPtr<Client>::Type(c));
+    c = new Client(); c->Id = "ClientID"; c->RedirectUri = "https://www.getpostman.com/oauth2/callback"; c->Secret = "SECRET!"; c->Scope = "basic xxx private email";
+    pMemStorage->create(OAuth2::SharedPtr<Client>::Type(c));
+
+    list->ClientStorage = OAuth2::SharedPtr<MemoryStorageMock<typename OAuth2::SharedPtr<Client>::Type> >::Type(pMemStorage);
+
+    list->ClientAuthN = OAuth2::SharedPtr<IClientAuthenticationFacade>::Type(new ClientAuthenticationFacadeMock());
+
+    ServiceLocator::init(list);
+}
+
+void initializeTestServer()
 {
     initializeServiceLocator();
-
-    g_as = initializeAuth2Server();
-
-	MyHTTPServer app;
-	return app.run(argc, argv);
+    initializeAuth2Server();
 }

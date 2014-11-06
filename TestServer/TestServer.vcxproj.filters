@@ -6,9 +6,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="tests\TestEntities.cpp">
-      <Filter>Tests</Filter>
-    </ClCompile>
     <ClCompile Include="tests\Mocks.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
@@ -16,7 +13,7 @@
       <Filter>Tests</Filter>
     </ClCompile>
     <ClCompile Include="PocoHttpTestServer.cpp" />
-    <ClCompile Include="MainTestsEntry.cpp" />
+    <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tests\TestUtilities.h">
@@ -35,5 +32,9 @@
       <Filter>Tests</Filter>
     </ClInclude>
     <ClInclude Include="PocoHelpers.h" />
+    <ClInclude Include="tests\AuthorizationMocks.h">
+      <Filter>Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="PocoHttpTestServer.h" />
   </ItemGroup>
 </Project>

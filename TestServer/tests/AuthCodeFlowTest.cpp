@@ -18,9 +18,8 @@ void AuthCodeFlowTest::Setup(void)
 void AuthCodeFlowTest::TestFlow(void)
 {
     ServiceLocator::ServiceList *list = new ServiceLocator::ServiceList();
-    list->HttpResponseFactory = SharedPtr<HttpResponseFactoryMock>::Type(new HttpResponseFactoryMock());
     list->AuthorizationServerPolicies = SharedPtr<IAuthorizationServerPolicies>::Type (new StandardAuthorizationServerPolicies());
-    list->UserAuthN = SharedPtr<IUserAuthenticationFacade>::Type (new UserAuthenticationFacadeMock());
+    list->UserAuthN = SharedPtr<IUserAuthenticationFacade>::Type (new UserAuthenticationFacadeMock("User123",false));
     list->ClientAuthZ = SharedPtr<IClientAuthorizationFacade>::Type (new ClientAuthorizationFacadeMock());
     list->AuthCodeGen = SharedPtr<IAuthorizationCodeGenerator>::Type (new AuthorizationCodeGeneratorMock());
     
@@ -37,30 +36,26 @@ void AuthCodeFlowTest::TestFlow(void)
 
     ServiceLocator::init(list);
 
-
     CodeRequestProcessor crp;
 
     assert(!crp.canProcessRequest(*_samples.Empty));
     assert(!crp.canProcessRequest(*_samples.Bad1));
     assert(crp.canProcessRequest(*_samples.Good1));
 
-    SharedPtr<IHttpResponse>::Type response = crp.processRequest(*_samples.Empty);
+    HTTPRequestResponseMock r;
+
+    crp.processRequest(*_samples.Empty, r);
     
-    HTTPRequestResponseMock* r = dynamic_cast<HTTPRequestResponseMock*>(response.get());
-    assert(r->getBody() == "{\"error\":\"invalid_request\"}");
+    assert(r.getBody() == "{\"error\":\"invalid_request\"}");
 
-    response = crp.processRequest(*_samples.Bad1);
-    r = dynamic_cast<HTTPRequestResponseMock*>(response.get());
-    assert(r->getBody() == "{\"error\":\"unauthorized_client\"}");
+    crp.processRequest(*_samples.Bad1, r);
+    assert(r.getBody() == "{\"error\":\"unauthorized_client\"}");
 
-    response = crp.processRequest(*_samples.Bad2);
-    r = dynamic_cast<HTTPRequestResponseMock*>(response.get());
-    assert(r->getBody() == "{\"error\":\"invalid_scope\"}");
+    crp.processRequest(*_samples.Bad2, r);
+    assert(r.getBody() == "{\"error\":\"invalid_scope\"}");
 
-    response = crp.processRequest(*_samples.Good1);
-    r = dynamic_cast<HTTPRequestResponseMock*>(response.get());
-    assert(!r->getParam("code").empty());
-
+    crp.processRequest(*_samples.Good1, r);
+    assert(!r.getParam("code").empty());
 }
 
 };// namespace Test

@@ -104,73 +104,23 @@ public:
     virtual string getParam(const string &name) const  { return _params[name]; }; //should switch by HTTP verb
     virtual string getURI() const { return _uri; };
     virtual string getBody() const {return _body;};
-    virtual HttpStatusType getCode() const {return _status;};
-    //virtual string HttpUniqueId () const { return "XXX"; };
 
     //Response
     virtual void addHeader(string const &name, string const &value) {_headers[name]=value;};
-    virtual void addParam(const string &name, const string &value) {_params[name]=value;};
+    virtual string formatUriParameters(std::map<string,string> params) const
+    {
+        std::ostringstream ostr;
+        for(std::map<string,string>::const_iterator it = params.begin(); it != params.end(); ++it)
+            ostr<<it->first<<"="<<it->second<<"&";
+        return ostr.str();
+    };
+
+    //virtual void addParam(const string &name, const string &value) {_params[name]=value;};
     virtual void setURI(string const &uri) {_uri =uri;};
     virtual void setBody(string const &body) {_body = body;};
     virtual void setStatus(HttpStatusType status) {_status = status;};
 };
 
-class HttpResponseFactoryMock : public IHttpResponseFactory
-{
-public:
-    virtual SharedPtr<IHttpResponse>::Type Create() const {return SharedPtr<IHttpResponse>::Type(new HTTPRequestResponseMock());};
-};
-
-
-//For test purpose only! it's external to AS system
-class UserAuthenticationFacadeMock : public IUserAuthenticationFacade
-{
-public:
-    static const string AuthPageBody;
-    static const string UserIdParamName;
-
-    virtual UserIdType authenticateUser(const IHttpRequest &request)
-    { 
-        return request.getParam(UserAuthenticationFacadeMock::UserIdParamName);
-    };
-    virtual SharedPtr<IHttpResponse>::Type makeAuthenticationRequestPage(const IHttpRequest &request)
-    {
-        SharedPtr<IHttpResponse>::Type response = ServiceLocator::instance().HttpResponseFactory->Create();
-        response->setBody(UserAuthenticationFacadeMock::AuthPageBody);
-        return response;
-    };
-    virtual SharedPtr<IHttpResponse>::Type processAuthenticationRequest(const IHttpRequest &request)
-    {
-        throw std::logic_error("it's external subsystem entrails behaviour! move back!");
-    };
-    virtual ~UserAuthenticationFacadeMock(){};
-};
-
-class ClientAuthorizationFacadeMock : public IClientAuthorizationFacade
-{
-private:
-    /*std::set*/std::map<string,int> _grants;
-
-public:
-    static const string AuthPageBody;
-    //static const string UserIdParamName;
-
-    virtual bool isClientAuthorizedByUser(const UserIdType &userId, const ClientIdType &clientId, const string &scope) const
-    {
-        return true; // userId == "";
-    };
-    virtual SharedPtr<IHttpResponse>::Type makeAuthorizationRequestPage(const UserIdType &userId, const ClientIdType &clientId, const string &scope) const
-    {
-        SharedPtr<IHttpResponse>::Type response = ServiceLocator::instance().HttpResponseFactory->Create();
-        response->setBody(UserAuthenticationFacadeMock::AuthPageBody);
-        return response;
-    };
-    virtual SharedPtr<IHttpResponse>::Type processAuthorizationRequest(const IHttpRequest& request)
-    {
-        throw std::logic_error("not implemented YET!");
-    };
-    virtual ~ClientAuthorizationFacadeMock(){};
-};
 
 // Save generate and save code in memory storage
 // RFC6749 4.1.3
@@ -193,6 +143,7 @@ public:
         _codes[code] = oss.str();
         return code;
     };
+
     virtual bool checkAndRemoveAuthorizationCode(const string &code, RequestParams &params)
     {
         if (_codes.find(code) == _codes.end()) return false;
@@ -214,19 +165,6 @@ public:
     };
     virtual ~AuthorizationCodeGeneratorMock(){};
 };
-
-
-class ClientAuthenticationFacadeMock : public IClientAuthenticationFacade
-{
-public:
-    virtual ClientIdType authenticateClient(const IHttpRequest &request)
-    {
-        return "ClientID";
-    }
-
-    virtual ~ClientAuthenticationFacadeMock(){};
-};
-
 
 }; //namespace Test
 }; //namespace OAuth2

@@ -96,6 +96,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AuthorizationCodeGrant.cpp" />
+    <ClCompile Include="src\Constants.cpp" />
     <ClCompile Include="src\Helpers.cpp" />
     <ClCompile Include="src\OAuth2.cpp" />
   </ItemGroup>

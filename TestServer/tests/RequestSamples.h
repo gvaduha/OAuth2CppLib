@@ -1,5 +1,6 @@
 #pragma once
 #include "Mocks.h"
+#include "AuthorizationMocks.h"
 
 namespace OAuth2
 {
