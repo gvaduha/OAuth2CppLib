@@ -25,17 +25,17 @@ struct RequestSamples
         Empty.reset(new HTTPRequestResponseMock(headers));
     
         headers[""] = "";
-        headers["response_type"] = "xxx";
-        headers["client_id"] = "nosuchlient";
+        headers[Params::response_type] = "xxx";
+        headers[Params::client_id] = "nosuchlient";
         Bad1.reset(new HTTPRequestResponseMock(headers));
     
-        headers["client_id"] = CorrectClientId;
-        headers["scope"] = "pron";
+        headers[Params::client_id] = CorrectClientId;
+        headers[Params::scope] = "pron";
         Bad2.reset(new HTTPRequestResponseMock(headers));
 
-        headers["client_secret"] = CorrectClientSecret;
-        headers["response_type"] = "code";
-        headers["scope"] = CorrectScope;
+        headers[Params::client_secret] = CorrectClientSecret;
+        headers[Params::response_type] = Params::code;
+        headers[Params::scope] = CorrectScope;
         Good1.reset(new HTTPRequestResponseMock(headers));
 
         headers[UserAuthenticationFacadeMock::UserIdParamName] = CorrectUserId;

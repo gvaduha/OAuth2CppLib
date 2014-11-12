@@ -44,36 +44,30 @@ private:
 class TokenFactoryMock : public ITokenFactory<TokenMock>
 {
 protected:
-    virtual void NewToken_Impl(SharedPtr<TokenMock>::Type token, const UserIdType &uid, const ClientIdType &cid, const string &scope) const;
-    virtual void FromJWT_Impl(SharedPtr<TokenMock>::Type token, const string &jwtToken) const;
+    virtual void NewToken_Impl(TokenMock *token, const UserIdType &uid, const ClientIdType &cid, const string &scope) const;
+    virtual void FromJWT_Impl(TokenMock *token, const string &jwtToken) const;
     const bool IsValidJWS(const string &jwtToken) const;
     const string DecodeJWE(const string &jweToken) const;
 };
 
 
-template<typename T>
-class MemoryStorageMock : public IStorage<T>
+class MemoryStorageMock : public IAuthorizationServerStorage
 {
 private:
-    std::map<ClientIdType,T> _storage;
+    std::map<ClientIdType,SharedPtr<Client>::Type> _clients;
 public:
-    T create(T &o)
+    Client * getClient(const ClientIdType &id)
     {
-        _storage[o->Id] = o;
-        return o;
+        return _clients[id].get();
     };
-    T load(const IdType &id)
+
+
+    //non-interface helpers part
+    //--------------------------
+
+    void createClient(Client *client)
     {
-        return _storage[id];
-    };
-    T update(T &o)
-    {
-        return _storage[o->Id] = o;
-        return o;
-    };
-    void remove(const IdType &id)
-    {
-        _storage.erase(id);
+        _clients[client->Id] = SharedPtr<Client>::Type(client);
     };
 };
 
@@ -132,13 +126,13 @@ private:
 public:
     AuthorizationCodeGeneratorMock()
     {
-        srand(static_cast<unsigned int>(std::time(NULL)));
+        srand(static_cast<unsigned int>(std::time(NULL))); //sequence is 41, 
     };
 
     virtual string generateAuthorizationCode(const RequestParams &params)
     {
         std::ostringstream oss;
-        oss << params.userId << ":" << params.clientId << ":" << params.scope << ":" << params.uri << ":";
+        oss << params.userId << "`" << params.clientId << "`" << params.scope << "`" << params.uri << "`";
         string code = std::to_string(std::rand());
         _codes[code] = oss.str();
         return code;
@@ -153,7 +147,7 @@ public:
         std::vector<string> out;
 
         std::string val;
-        while (std::getline(iss, val, ':'))
+        while (std::getline(iss, val, '`'))
             out.push_back(val);
 
         params.userId = out[0];
@@ -161,8 +155,15 @@ public:
         params.scope = out[2];
         params.uri = out[3];
 
+        _codes.erase(code);
+
         return true;
     };
+
+    virtual void removeExpiredCodes()
+    {
+    }
+
     virtual ~AuthorizationCodeGeneratorMock(){};
 };
 

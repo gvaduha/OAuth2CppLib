@@ -26,8 +26,8 @@ void make_error_response(const Errors::Code error, const string &msg, const IHtt
     response.addHeader("Content-type","application/json; charset=utf-8");
     
     jsonmap_t map;
-    map.insert(jsonpair_t("error",Errors::getText(error)));
-    map.insert(jsonpair_t("error_description",msg));
+    map.insert(jsonpair_t(Params::error,Errors::getText(error)));
+    map.insert(jsonpair_t(Params::error_description,msg));
 
     response.setBody(mapToJSON(map));
 };

@@ -14,4 +14,7 @@
     <ClInclude Include="include\OAuth2.h" />
     <ClInclude Include="include\Types.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram.cd" />
+  </ItemGroup>
 </Project>

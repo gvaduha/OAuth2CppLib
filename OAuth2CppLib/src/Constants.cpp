@@ -4,7 +4,8 @@
 namespace OAuth2
 {
     
-    const UserIdType EmptyUser = "";
+    const UserIdType EmptyUserId = "";
+    const ClientIdType EmptyClientId = "";
 
 namespace Errors
 {

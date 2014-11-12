@@ -9,7 +9,7 @@ namespace OAuth2
 //    
 //    Authorization Request:
 //    ----------------------
-//    response_type REQUIRED == "code".
+//    response_type REQUIRED == 'code'.
 //    client_id REQUIRED RFC6749 Section 2.2.
 //    redirect_uri OPTIONAL RFC6749 Section 3.1.2.
 //    scope OPTIONAL RFC6749 Section 3.3.
@@ -25,14 +25,14 @@ namespace OAuth2
 //
 //    Token Request:
 //    --------------
-//    grant_type REQUIRED == "authorization_code".
+//    grant_type REQUIRED == 'authorization_code'.
 //    code REQUIRED code received from Authorization endpoint.
 //    redirect_uri REQUIRED if included in authorization request (values must be identical!)
 //    scope OPTIONAL RFC6749 Section 3.3.
 //    state RECOMMENDED
 //    
 //
-//   OAUTH_NAMED_STRING_CONST(kAuthzResponseType,"code");
+//   OAUTH_NAMED_STRING_CONST(kAuthzResponseType,Params::code);
 namespace AuthorizationCodeGrant
 {
 
@@ -46,7 +46,7 @@ public:
 
     virtual bool canProcessRequest(const IHttpRequest &request) const
     {
-        return request.getParam("response_type") == "code";
+        return request.getParam(Params::response_type) == Params::code;
     };
 
     virtual Errors::Code processRequest(const IHttpRequest &request, IHttpResponse &response);
@@ -63,7 +63,7 @@ public:
 
     virtual bool canProcessRequest(const IHttpRequest & request) const
     {
-        return request.getParam("grant_type") == "authorization_code";
+        return request.getParam(Params::grant_type) == "authorization_code";
     };
 
     virtual Errors::Code processRequest(const IHttpRequest &request, IHttpResponse &response);

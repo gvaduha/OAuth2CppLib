@@ -21,7 +21,9 @@ class PocoHttpRequestAdapter : public OAuth2::IHttpRequest
 
 public:
     PocoHttpRequestAdapter(HTTPServerRequest *rq)
-        : _req(rq), _form(*rq)
+        : _req(rq)
+        // Use patch for UTF-8 forms with BOM (https://github.com/pocoproject/poco/commit/eb8dce47fe2a89870d8b38f1fb6d9e9a81d815af) consider only chages related to BOM
+        ,_form(*rq, rq->stream())
     {}
 
     virtual string getVerb() const { return _req->getMethod(); }

@@ -112,24 +112,20 @@ void initializeServiceLocator()
     using namespace OAuth2;
     using namespace OAuth2::Test;
 
-    ServiceLocator::ServiceList *list = new ServiceLocator::ServiceList();
-
-    list->AuthorizationServerPolicies = OAuth2::SharedPtr<IAuthorizationServerPolicies>::Type (new StandardAuthorizationServerPolicies());
-    list->UserAuthN = OAuth2::SharedPtr<IUserAuthenticationFacade>::Type (new UserAuthenticationFacadeMock("User123",true));
-    list->ClientAuthZ = OAuth2::SharedPtr<IClientAuthorizationFacade>::Type (new ClientAuthorizationFacadeMock());
-    list->AuthCodeGen = OAuth2::SharedPtr<IAuthorizationCodeGenerator>::Type (new AuthorizationCodeGeneratorMock());
+    IAuthorizationServerPolicies *policies = new StandardAuthorizationServerPolicies();
+    IUserAuthenticationFacade *uauthn = new UserAuthenticationFacadeMock("User123",true);
+    IClientAuthorizationFacade *cauthz = new ClientAuthorizationFacadeMock();
+    IAuthorizationCodeGenerator *authcodegen = new AuthorizationCodeGeneratorMock();
+    IClientAuthenticationFacade *cauthn = new ClientAuthenticationFacadeMock();
     
-    MemoryStorageMock<typename OAuth2::SharedPtr<Client>::Type> *pMemStorage = new MemoryStorageMock<typename OAuth2::SharedPtr<Client>::Type>();
+    MemoryStorageMock *pMemStorage = new MemoryStorageMock();
 
     Client *c = new Client(); c->Id = "01234"; c->RedirectUri = ""; c->Secret = "abc"; c->Scope = "one two three four";
-    pMemStorage->create(OAuth2::SharedPtr<Client>::Type(c));
-    c = new Client(); c->Id = "ClientID"; c->RedirectUri = "https://www.getpostman.com/oauth2/callback"; c->Secret = "SECRET!"; c->Scope = "basic xxx private email";
-    pMemStorage->create(OAuth2::SharedPtr<Client>::Type(c));
+    pMemStorage->createClient(c);
+    c = new Client(); c->Id = "ClientID"; c->RedirectUri = "http://localhost/IbTest/hs/client/oauth";/*"https://www.getpostman.com/oauth2/callback";*/ c->Secret = "xSecreTx"; c->Scope = "basic xxx private email";
+    pMemStorage->createClient(c);
 
-    list->ClientStorage = OAuth2::SharedPtr<MemoryStorageMock<typename OAuth2::SharedPtr<Client>::Type> >::Type(pMemStorage);
-
-    list->ClientAuthN = OAuth2::SharedPtr<IClientAuthenticationFacade>::Type(new ClientAuthenticationFacadeMock());
-
+    ServiceLocator::ServiceList *list = new ServiceLocator::ServiceList(uauthn, cauthz, cauthn, authcodegen, pMemStorage, policies);
     ServiceLocator::init(list);
 }
 

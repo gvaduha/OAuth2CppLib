@@ -6,6 +6,7 @@
 //#include <set>
 
 #include <Poco/RegularExpression.h>
+#include <Poco/String.h>
 
 namespace OAuth2
 {
@@ -30,7 +31,7 @@ public:
     virtual UserIdType authenticateUser(const IHttpRequest &request)
     { 
         if (_requestAuth)
-            return EmptyUser;
+            return EmptyUserId;
 
         return _returnUser;
         //!!! return request.getParam(UserAuthenticationFacadeMock::UserIdParamName);
@@ -101,7 +102,15 @@ class ClientAuthenticationFacadeMock : public IClientAuthenticationFacade
 public:
     virtual ClientIdType authenticateClient(const IHttpRequest &request)
     {
-        return "ClientID";
+        ClientIdType cid = static_cast<ClientIdType>(request.getParam(Params::client_id));
+        string secret = request.getParam(Params::client_secret);
+        Client *c = ServiceLocator::instance().Storage->getClient(cid);
+
+        //HACK: case insensetive!
+        if (!c || c->empty() || 0 != Poco::icompare(c->Secret, secret))
+            return EmptyClientId;
+
+        return c->Id;
     }
 
     virtual ~ClientAuthenticationFacadeMock(){};

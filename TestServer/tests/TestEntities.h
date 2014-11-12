@@ -18,18 +18,18 @@ public:
         shared_ptr<ITokenFactory<TokenMock>> factory(new TokenFactoryMock());
 
         //Scope
-        const shared_ptr<TokenMock> t = factory->NewToken("UserA","ClientI","basic_profile email");
+        const shared_ptr<TokenMock> t = shared_ptr<TokenMock>(factory->NewToken("UserA","ClientI","basic_profile email"));
         assert(t->IsInTokenScope("email"));
         assert(!t->IsInTokenScope("shii"));
 
         //Conversion
         string jwt = t->ToJWT();
-        shared_ptr<TokenMock> t1 = factory->FromJWT(jwt);
+        shared_ptr<TokenMock> t1 = shared_ptr<TokenMock>(factory->FromJWT(jwt));
 
         assert(t->ClientId == t1->ClientId && t->UserId == t1->UserId && t->Scope == t1->Scope);
 
         //Null tokens
-        shared_ptr<TokenMock> t2 = factory->FromJWT(""); //create null token
+        shared_ptr<TokenMock> t2 = shared_ptr<TokenMock>(factory->FromJWT("")); //create null token
         assert(t2->IsNullToken());
         assert(!t->IsNullToken());
     };

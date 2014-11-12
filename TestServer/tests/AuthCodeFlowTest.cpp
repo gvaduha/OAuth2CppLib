@@ -17,23 +17,20 @@ void AuthCodeFlowTest::Setup(void)
 
 void AuthCodeFlowTest::TestFlow(void)
 {
-    ServiceLocator::ServiceList *list = new ServiceLocator::ServiceList();
-    list->AuthorizationServerPolicies = SharedPtr<IAuthorizationServerPolicies>::Type (new StandardAuthorizationServerPolicies());
-    list->UserAuthN = SharedPtr<IUserAuthenticationFacade>::Type (new UserAuthenticationFacadeMock("User123",false));
-    list->ClientAuthZ = SharedPtr<IClientAuthorizationFacade>::Type (new ClientAuthorizationFacadeMock());
-    list->AuthCodeGen = SharedPtr<IAuthorizationCodeGenerator>::Type (new AuthorizationCodeGeneratorMock());
+    IAuthorizationServerPolicies *policies = new StandardAuthorizationServerPolicies();
+    IUserAuthenticationFacade *uauthn = new UserAuthenticationFacadeMock("User123",false);
+    IClientAuthorizationFacade *cauthz = new ClientAuthorizationFacadeMock();
+    IAuthorizationCodeGenerator *authcodegen = new AuthorizationCodeGeneratorMock();
+    IClientAuthenticationFacade *cauthn = new ClientAuthenticationFacadeMock();
     
-    MemoryStorageMock<typename SharedPtr<Client>::Type> *pMemStorage = new MemoryStorageMock<typename SharedPtr<Client>::Type>();
+    MemoryStorageMock *pMemStorage = new MemoryStorageMock();
 
     Client *c = new Client(); c->Id = "01234"; c->RedirectUri = ""; c->Secret = "abc"; c->Scope = "one two three four";
-    pMemStorage->create(SharedPtr<Client>::Type(c));
+    pMemStorage->createClient(c);
     c = new Client(); c->Id = CorrectClientId; c->RedirectUri = "http://localhost"; c->Secret = CorrectClientSecret; c->Scope = "basic xxx private email";
-    pMemStorage->create(SharedPtr<Client>::Type(c));
+    pMemStorage->createClient(c);
 
-    list->ClientStorage = SharedPtr<MemoryStorageMock<typename SharedPtr<Client>::Type> >::Type(pMemStorage);
-
-    list->ClientAuthN = SharedPtr<IClientAuthenticationFacade>::Type(NULL);
-
+    ServiceLocator::ServiceList *list = new ServiceLocator::ServiceList(uauthn, cauthz, cauthn, authcodegen, pMemStorage, policies);
     ServiceLocator::init(list);
 
     CodeRequestProcessor crp;
@@ -55,7 +52,7 @@ void AuthCodeFlowTest::TestFlow(void)
     assert(r.getBody() == "{\"error\":\"invalid_scope\"}");
 
     crp.processRequest(*_samples.Good1, r);
-    assert(!r.getParam("code").empty());
+    assert(!r.getParam(Params::code).empty());
 }
 
 };// namespace Test

@@ -12,7 +12,7 @@ namespace AuthorizationCodeGrant
 Errors::Code CodeRequestProcessor::processRequest(const IHttpRequest &request, IHttpResponse &response)
 {
     // validation
-    ClientIdType cid = request.getParam("client_id");
+    ClientIdType cid = request.getParam(Params::client_id);
     if (cid.empty())
     {
         make_error_response(Errors::Code::invalid_request, "no client_id", request, response);
@@ -21,16 +21,16 @@ Errors::Code CodeRequestProcessor::processRequest(const IHttpRequest &request, I
 
     ServiceLocator::ServiceList sl = ServiceLocator::instance();
 
-    SharedPtr<Client>::Type client = sl.ClientStorage->load(cid);
+    Client *client = sl.Storage->getClient(cid);
 
-    if (!client)
+    if (!client || client->empty())
     {
         make_error_response(Errors::Code::unauthorized_client, "client unregistered", request, response);
         return Errors::Code::unauthorized_client;
     }
 
     // scope is OPTIONAL parameter by RFC, but should be in request OR registered with client
-    string scope = request.getParam("scope");
+    string scope = request.getParam(Params::scope);
     if (scope.empty())
         if (client->Scope.empty())
         {
@@ -47,7 +47,7 @@ Errors::Code CodeRequestProcessor::processRequest(const IHttpRequest &request, I
         }
 
     // redirect_uri is OPTIONAL parameter by RFC
-    string uri = request.getParam("redirect_uri");
+    string uri = request.getParam(Params::redirect_uri);
     if (uri.empty())
         if (client->RedirectUri.empty())
         {
@@ -81,21 +81,23 @@ Errors::Code CodeRequestProcessor::processRequest(const IHttpRequest &request, I
 
     // generate code and make response
     // it's important that redirect_uri is as in request for token request (see RFC6749 4.1.3 request requirements)
-    IAuthorizationCodeGenerator::RequestParams params(uid, cid, scope, request.getParam("redirect_uri"));
+    IAuthorizationCodeGenerator::RequestParams params(uid, cid, scope, request.getParam(Params::redirect_uri));
 
     AuthCodeType code = sl.AuthCodeGen->generateAuthorizationCode(params);
 
-    makeAuthCodeResponse(code, uri, request, response);
+    // we should use original uri from response, because when exchanging code to token
+    // redirect_uri is REQUIRED if included in auth code request RFC6749 4.1.3
+    makeAuthCodeResponse(code, request.getParam(Params::redirect_uri), request, response);
     return Errors::Code::ok;
 };
 
 void CodeRequestProcessor::makeAuthCodeResponse(const AuthCodeType &code, const string redirect_uri, const IHttpRequest &request, IHttpResponse &response)
 {
     std::map<string,string> params;
-    params["auth_code"] = code; //HACK: !!!!!!!!!!!! CODE <- AUTH_CODE !!!!!
+    params[Params::code] = code;
 
-    if (request.isParamExist("state"))
-        params["state"] = request.getParam("state");
+    if (request.isParamExist(Params::state))
+        params[Params::state] = request.getParam(Params::state);
 
     response.addHeader("Location", redirect_uri + "?" + response.formatUriParameters(params));
 
@@ -110,14 +112,15 @@ Errors::Code TokenRequestProcessor::processRequest(const IHttpRequest &request, 
 
     if (cid.empty())
     {
-        make_error_response(Errors::Code::unauthorized_client, "", request, response);
+        make_error_response(Errors::Code::unauthorized_client, "client not found", request, response);
         return Errors::Code::unauthorized_client;
     }
 
     IAuthorizationCodeGenerator::RequestParams codeAssoc;
-    sl.AuthCodeGen->checkAndRemoveAuthorizationCode(request.getParam("code"), codeAssoc);
 
-    if(request.getParam("redirect_uri") != codeAssoc.uri || request.getParam("client_id") != codeAssoc.clientId)
+    if ( !sl.AuthCodeGen->checkAndRemoveAuthorizationCode(request.getParam(Params::code), codeAssoc) ||
+        request.getParam(Params::redirect_uri) != codeAssoc.uri || 
+        request.getParam(Params::client_id) != codeAssoc.clientId )
     {
         make_error_response(Errors::Code::invalid_request, "code not found", request, response);
         return Errors::Code::invalid_request;
@@ -125,6 +128,8 @@ Errors::Code TokenRequestProcessor::processRequest(const IHttpRequest &request, 
 
     /////////////////////////////////////////////////////////////////////////
     //Create Token, Save Token, makeTokenResponse(...)
+
+    //TODO: ???
     
     makeTokenResponse(request, response);
     return Errors::Code::ok;
@@ -137,11 +142,12 @@ void TokenRequestProcessor::makeTokenResponse(/*const Token &code, */const IHttp
     response.addHeader("Cache-Control","no-store");
     response.addHeader("Pragma","no-cache");
 
+    //HACK: hardcoded garbage values
     jsonmap_t map;
-    map.insert(jsonpair_t("access_token","XXXXX"));
-    map.insert(jsonpair_t("token_type","Bearer"));
-    map.insert(jsonpair_t("expires_in","XXXXX"));
-    map.insert(jsonpair_t("refresh_token","XXXXX"));
+    map.insert(jsonpair_t(Params::access_token,"XXXXX"));
+    map.insert(jsonpair_t(Params::token_type,"Bearer"));
+    map.insert(jsonpair_t(Params::expires_in,"4321"));
+    map.insert(jsonpair_t(Params::refresh_token,"RFRSH"));
 
     response.setBody(mapToJSON(map));
     response.setStatus(200);

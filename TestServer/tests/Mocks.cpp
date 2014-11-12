@@ -29,14 +29,14 @@ const string ClientAuthorizationFacadeMock::_authzPageBody =
     "</form></body></html>";
 //const string ClientAuthorizationFacadeMock::UserIdParamName = "UserId";
 
-void TokenFactoryMock::NewToken_Impl(SharedPtr<TokenMock>::Type token, const UserIdType &uid, const ClientIdType &cid, const string &scope) const
+void TokenFactoryMock::NewToken_Impl(TokenMock *token, const UserIdType &uid, const ClientIdType &cid, const string &scope) const
 {
     token->ClientId = cid;
     token->UserId = uid;
     token->Scope = scope;
 };
 
-void TokenFactoryMock::FromJWT_Impl(SharedPtr<TokenMock>::Type token, const string &jwtToken) const
+void TokenFactoryMock::FromJWT_Impl(TokenMock *token, const string &jwtToken) const
 {
     istringstream iss(jwtToken);
     string part;   

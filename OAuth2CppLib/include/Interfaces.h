@@ -71,21 +71,21 @@ template<typename T>
 class ITokenFactory
 {
 public:
-    const typename SharedPtr<T>::Type NewToken(const UserIdType &uid, const ClientIdType &cid, const string &scope)
+    typename T * NewToken(const UserIdType &uid, const ClientIdType &cid, const string &scope) const
     {
-        typename SharedPtr<T>::Type t(new T());
+        T *t = new T();
         NewToken_Impl(t, uid, cid, scope);
         return t;
     };
-    const typename SharedPtr<T>::Type FromJWT(const string &jwtToken) const
+    typename T * FromJWT(const string &jwtToken) const
     {
-        typename SharedPtr<T>::Type t(new T());
+        typename T *t = new T();
         FromJWT_Impl(t, jwtToken);
         return t;
     };
 protected:
-    virtual void NewToken_Impl(typename SharedPtr<T>::Type token, const UserIdType &uid, const ClientIdType &cid, const string &scope) const = 0;
-    virtual void FromJWT_Impl(typename SharedPtr<T>::Type token, const string &jwtToken) const = 0;
+    virtual void NewToken_Impl(T *token, const UserIdType &uid, const ClientIdType &cid, const string &scope) const = 0;
+    virtual void FromJWT_Impl(T *token, const string &jwtToken) const = 0;
 public:
     virtual ~ITokenFactory(){};
 };
@@ -98,7 +98,7 @@ public:
 class IUserAuthenticationFacade
 {
 public:
-    // Gets user's credentials from request and return userId if authorized, else return EmptyUserId
+    // Gets user's credentials from request and return userId if authorized, else return EmptyUserIdId
     // Function has intimate knowledge about how external User Authentication subsystem 
     // store user or session information in request and how to get user id from it
     virtual UserIdType authenticateUser(const IHttpRequest &request) = 0;
@@ -119,7 +119,7 @@ public:
 class IClientAuthenticationFacade
 {
 public:
-    // Gets client's credentials from request and return clientId if authorized, else return EmptyClientId
+    // Gets client's credentials from request and return clientId if authorized, else return EmptyClientIdId
     // Check existance of record for client with credentials from request in AS store
     virtual ClientIdType authenticateClient(const IHttpRequest &request) = 0; //NO_THROW
     virtual ~IClientAuthenticationFacade(){};
@@ -154,8 +154,17 @@ public:
     string Secret;
     string RedirectUri;
     string Scope;
+
+    Client()
+        : Id(EmptyClientId)
+    {}
+
+    bool empty()
+    {
+        return Id == EmptyClientId;
+    }
 };
-//static const Client EmptyClient;
+//static const Client EmptyClientId;
 
 // Set of policies to apply inside AS
 class IAuthorizationServerPolicies
@@ -221,20 +230,42 @@ public:
 
     virtual string generateAuthorizationCode(const RequestParams &params) = 0;
     virtual bool checkAndRemoveAuthorizationCode(const string &code, RequestParams &params) = 0;
+    virtual void removeExpiredCodes() = 0;
     virtual ~IAuthorizationCodeGenerator(){};
 };
 
-//HACK: Is it needed?
-// Storage abstraction
-template<typename T>
-class IStorage
+template <typename TExt, typename TInt>
+class AuthorizationCodeGeneratorDecorator : IAuthorizationCodeGenerator
+{
+private:
+    typename SharedPtr<TExt>::Type _exto;
+    typename SharedPtr<TInt>::Type _into;
+
+public:
+    AuthorizationCodeGeneratorDecorator(TExt *exto, TInt *into)
+        : _exto(exto), _into(into)
+    {}
+
+    virtual string generateAuthorizationCode(const RequestParams &params)
+    {
+        return "";
+    };
+
+    virtual bool checkAndRemoveAuthorizationCode(const string &code, RequestParams &params) = 0;
+    virtual void removeExpiredCodes() = 0;
+    virtual ~AuthorizationCodeGeneratorDecorator(){};
+};
+
+class IAuthorizationServerStorage
 {
 public:
-    virtual T create(T &o) = 0;
-    virtual T load(const IdType &id) = 0;
-    virtual T update(T &o) = 0;
-    virtual void remove(const IdType &id) = 0;
-    virtual ~IStorage(){};
+    //virtual T create(T &o) = 0;
+    //virtual T load(const IdType &id) = 0;
+    //virtual T update(T &o) = 0;
+    //virtual void remove(const IdType &id) = 0;
+    // Should never return null, just empty client
+    virtual Client * getClient(const ClientIdType &id) = 0;
+    virtual ~IAuthorizationServerStorage(){};
 };
 
 // Holder of all services required to process messages
@@ -243,19 +274,28 @@ class ServiceLocator
 public:
     struct ServiceList
     {
-        SharedPtr<IUserAuthenticationFacade>::Type UserAuthN;
-        SharedPtr<IClientAuthorizationFacade>::Type ClientAuthZ;
-        SharedPtr<IClientAuthenticationFacade>::Type ClientAuthN;
-        SharedPtr<IAuthorizationCodeGenerator>::Type AuthCodeGen;
-        SharedPtr<IStorage<SharedPtr<Client>::Type> >::Type ClientStorage;
-        SharedPtr<IAuthorizationServerPolicies>::Type AuthorizationServerPolicies;
+        const SharedPtr<IUserAuthenticationFacade>::Type UserAuthN;
+        const SharedPtr<IClientAuthorizationFacade>::Type ClientAuthZ;
+        const SharedPtr<IClientAuthenticationFacade>::Type ClientAuthN;
+        const SharedPtr<IAuthorizationCodeGenerator>::Type AuthCodeGen;
+        const SharedPtr<IAuthorizationServerStorage>::Type Storage;
+        const SharedPtr<IAuthorizationServerPolicies>::Type AuthorizationServerPolicies;
         //typename SharedPtr<ITokenFactory<typename TToken> >::Type TokenFactory;
 
+        ServiceList(IUserAuthenticationFacade *uauthn, IClientAuthorizationFacade *cauthz, IClientAuthenticationFacade *cauthn,
+            IAuthorizationCodeGenerator *authcodegen, IAuthorizationServerStorage *storage, IAuthorizationServerPolicies *policies)
+            : UserAuthN(uauthn), ClientAuthZ(cauthz), ClientAuthN(cauthn), AuthCodeGen(authcodegen),
+            Storage(storage), AuthorizationServerPolicies(policies)
+        {}
+
+        friend class ServiceLocator;
+
+    private:
         //FRAGILE CODE: Should be revised every time ServiceList changed!
         void checkForNullPtrs()
         {
-            if (!this->AuthCodeGen ||  !this->AuthorizationServerPolicies || !this->ClientAuthN
-                || !this->ClientAuthZ || !this->ClientStorage || !this->UserAuthN)
+            if (!this->AuthCodeGen ||  !this->AuthorizationServerPolicies //|| !this->ClientAuthN
+                || !this->ClientAuthZ || !this->Storage || !this->UserAuthN)
                 throw AuthorizationException("Can't initialize ServiceLocator with null values");
         };
     };
