@@ -13,6 +13,7 @@
     <ClInclude Include="include\Interfaces.h" />
     <ClInclude Include="include\OAuth2.h" />
     <ClInclude Include="include\Types.h" />
+    <ClInclude Include="include\Entities.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagram.cd" />

@@ -69,7 +69,7 @@ public:
     virtual Errors::Code processRequest(const IHttpRequest &request, IHttpResponse &response);
 
 private:
-    void makeTokenResponse(/*const Token &code, */const IHttpRequest &request, IHttpResponse &response);
+    void makeTokenResponse(const TokenBundle &tokenBundle, const IHttpRequest &request, IHttpResponse &response);
 };
 
 };// namespace AuthorizationCodeGrant

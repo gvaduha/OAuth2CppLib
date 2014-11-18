@@ -87,6 +87,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\Entities.h" />
     <ClInclude Include="src\Helpers.h" />
     <ClInclude Include="include\AuthorizationCodeGrant.h" />
     <ClInclude Include="include\Constants.h" />

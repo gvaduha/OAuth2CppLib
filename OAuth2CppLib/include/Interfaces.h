@@ -6,6 +6,7 @@
 #pragma once
 #include "Types.h"
 #include "Constants.h"
+#include "Entities.h"
 #include <map>
 
 namespace OAuth2
@@ -49,6 +50,7 @@ public:
     virtual bool isHeaderExist(const string &name) const = 0;
     virtual string getHeader(const string &name) const = 0;
     virtual bool isParamExist(const string &name) const = 0;
+    virtual std::map<string,string> getParams() const = 0;
     virtual string getParam(const string &name) const = 0;
     virtual string getURI() const = 0;
     virtual string getBody() const = 0;
@@ -67,26 +69,11 @@ public:
 };
 
 // Abstract token factory
-template<typename T>
 class ITokenFactory
 {
 public:
-    typename T * NewToken(const UserIdType &uid, const ClientIdType &cid, const string &scope) const
-    {
-        T *t = new T();
-        NewToken_Impl(t, uid, cid, scope);
-        return t;
-    };
-    typename T * FromJWT(const string &jwtToken) const
-    {
-        typename T *t = new T();
-        FromJWT_Impl(t, jwtToken);
-        return t;
-    };
-protected:
-    virtual void NewToken_Impl(T *token, const UserIdType &uid, const ClientIdType &cid, const string &scope) const = 0;
-    virtual void FromJWT_Impl(T *token, const string &jwtToken) const = 0;
-public:
+    // Return new token in string representation in format "token_type RWS token_data"
+    virtual TokenBundle NewTokenBundle(const UserIdType &uid, const ClientIdType &cid, const Scope &scope, const IHttpRequest &request) const = 0;
     virtual ~ITokenFactory(){};
 };
 
@@ -134,11 +121,11 @@ class IClientAuthorizationFacade
 {
 public:
     // Check existance of record of authorization in AS store for userId->clientId&scope grant
-    virtual bool isClientAuthorizedByUser(const UserIdType &userId, const ClientIdType &clientId, const string &scope) const = 0; //NO_THROW
+    virtual bool isClientAuthorizedByUser(const UserIdType &userId, const ClientIdType &clientId, const Scope &scope) const = 0; //NO_THROW
     // Create page for user Authorization of client request using request params and/or AS saved client params
     // Saves information about referer page from request parameter
-    virtual void makeAuthorizationRequestPage(const UserIdType &userId, const ClientIdType &clientId, 
-                                                const string &scope, const string &redirect_uri, IHttpResponse &response) const = 0; //NO_THROW
+    virtual void makeAuthorizationRequestPage(const UserIdType &userId, const ClientIdType &clientId, const Scope &scope, 
+                                                const IHttpRequest &request, IHttpResponse &response) const = 0; //NO_THROW
     // Endpoint for processing authorization request from page maked by makeAuthorizationRequestPage
     // Should save record for userId->clientId(URI,scope) grant, then restart previous request saved by makeAuthorizationRequestPage
     virtual Errors::Code processAuthorizationRequest(const IHttpRequest& request, IHttpResponse &response) = 0; //NO_THROW
@@ -146,32 +133,12 @@ public:
 };
 
 
-// Client class
-class Client
-{
-public:
-    ClientIdType Id;
-    string Secret;
-    string RedirectUri;
-    string Scope;
-
-    Client()
-        : Id(EmptyClientId)
-    {}
-
-    bool empty()
-    {
-        return Id == EmptyClientId;
-    }
-};
-//static const Client EmptyClientId;
-
 // Set of policies to apply inside AS
 class IAuthorizationServerPolicies
 {
 public:
     // Checks request scope against client's
-    virtual bool isScopeValid(const Client &client, const string &scope) const = 0;
+    virtual bool isScopeValid(const Scope &clientScope, const Scope &requestScope) const = 0;
     // Checks request redirect_uri against client's
     virtual bool isValidCallbackUri(const Client &client, const string &scope) const = 0;
     // Retrieves callback Uri in case the client would like to implement more than one Uri strategy
@@ -216,55 +183,45 @@ public:
 class IAuthorizationCodeGenerator
 {
 public:
-    struct RequestParams
-    {
-        UserIdType userId;
-        ClientIdType clientId;
-        string scope;
-        string uri;
-        RequestParams(const UserIdType &userId, const ClientIdType &clientId, const string &scope, const string &uri)
-            : userId(userId), clientId(clientId), scope(scope), uri(uri) {};
-        RequestParams()
-            : userId(""), clientId(""), scope(""), uri("") {};
-    };
-
-    virtual string generateAuthorizationCode(const RequestParams &params) = 0;
-    virtual bool checkAndRemoveAuthorizationCode(const string &code, RequestParams &params) = 0;
+    virtual string generateAuthorizationCode(const Grant &params) = 0;
+    virtual bool checkAndRemoveAuthorizationCode(const string &code, Grant &params) = 0;
     virtual void removeExpiredCodes() = 0;
     virtual ~IAuthorizationCodeGenerator(){};
 };
 
-template <typename TExt, typename TInt>
-class AuthorizationCodeGeneratorDecorator : IAuthorizationCodeGenerator
-{
-private:
-    typename SharedPtr<TExt>::Type _exto;
-    typename SharedPtr<TInt>::Type _into;
-
-public:
-    AuthorizationCodeGeneratorDecorator(TExt *exto, TInt *into)
-        : _exto(exto), _into(into)
-    {}
-
-    virtual string generateAuthorizationCode(const RequestParams &params)
-    {
-        return "";
-    };
-
-    virtual bool checkAndRemoveAuthorizationCode(const string &code, RequestParams &params) = 0;
-    virtual void removeExpiredCodes() = 0;
-    virtual ~AuthorizationCodeGeneratorDecorator(){};
-};
+//TODO: !!!!????
+//template <typename TExt, typename TInt>
+//class AuthorizationCodeGeneratorDecorator : IAuthorizationCodeGenerator
+//{
+//private:
+//    typename SharedPtr<TExt>::Type _exto;
+//    typename SharedPtr<TInt>::Type _into;
+//
+//public:
+//    AuthorizationCodeGeneratorDecorator(TExt *exto, TInt *into)
+//        : _exto(exto), _into(into)
+//    {}
+//
+//    virtual string generateAuthorizationCode(const Grant &params)
+//    {
+//        return "";
+//    };
+//
+//    virtual bool checkAndRemoveAuthorizationCode(const string &code, Grant &params) = 0;
+//    virtual void removeExpiredCodes() = 0;
+//    virtual ~AuthorizationCodeGeneratorDecorator(){};
+//};
 
 class IAuthorizationServerStorage
 {
 public:
-    //virtual T create(T &o) = 0;
-    //virtual T load(const IdType &id) = 0;
-    //virtual T update(T &o) = 0;
-    //virtual void remove(const IdType &id) = 0;
-    // Should never return null, just empty client
-    virtual Client * getClient(const ClientIdType &id) = 0;
+    virtual Client * getClient(const ClientIdType &id) const = 0;
+    virtual void saveGrant(const Grant &grant) = 0;
+    virtual bool hasValidGrant(const Grant &grant) const = 0;
+    virtual void saveTokenBundle(const Grant &grant, const TokenBundle &token) = 0;
+    // unknownScope is return value for scopes isn't registered in storage
+    virtual bool isScopeExist(const Scope &scope, string &unknownScope) const = 0;
+    virtual bool isUriInScope(const string &uri, const Scope &scope) const = 0;
     virtual ~IAuthorizationServerStorage(){};
 };
 
@@ -280,12 +237,13 @@ public:
         const SharedPtr<IAuthorizationCodeGenerator>::Type AuthCodeGen;
         const SharedPtr<IAuthorizationServerStorage>::Type Storage;
         const SharedPtr<IAuthorizationServerPolicies>::Type AuthorizationServerPolicies;
-        //typename SharedPtr<ITokenFactory<typename TToken> >::Type TokenFactory;
+        const SharedPtr<ITokenFactory>::Type TokenFactory;
 
         ServiceList(IUserAuthenticationFacade *uauthn, IClientAuthorizationFacade *cauthz, IClientAuthenticationFacade *cauthn,
-            IAuthorizationCodeGenerator *authcodegen, IAuthorizationServerStorage *storage, IAuthorizationServerPolicies *policies)
+            IAuthorizationCodeGenerator *authcodegen, IAuthorizationServerStorage *storage, IAuthorizationServerPolicies *policies,
+            ITokenFactory *tokenf)
             : UserAuthN(uauthn), ClientAuthZ(cauthz), ClientAuthN(cauthn), AuthCodeGen(authcodegen),
-            Storage(storage), AuthorizationServerPolicies(policies)
+            Storage(storage), AuthorizationServerPolicies(policies), TokenFactory(tokenf)
         {}
 
         friend class ServiceLocator;
@@ -294,8 +252,9 @@ public:
         //FRAGILE CODE: Should be revised every time ServiceList changed!
         void checkForNullPtrs()
         {
-            if (!this->AuthCodeGen ||  !this->AuthorizationServerPolicies //|| !this->ClientAuthN
-                || !this->ClientAuthZ || !this->Storage || !this->UserAuthN)
+            if (!this->AuthCodeGen ||  !this->AuthorizationServerPolicies || !this->ClientAuthN
+                || !this->ClientAuthZ || !this->Storage || !this->UserAuthN
+                || !this->TokenFactory )
                 throw AuthorizationException("Can't initialize ServiceLocator with null values");
         };
     };

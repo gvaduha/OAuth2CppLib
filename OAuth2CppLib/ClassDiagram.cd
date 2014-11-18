@@ -1,0 +1,217 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="OAuth2::AuthorizationCodeGrant::CodeRequestProcessor" Collapsed="true">
+    <Position X="0.5" Y="2.5" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>EAAQAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAECAAAAA=</HashCode>
+      <FileName>include\AuthorizationCodeGrant.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="OAuth2::AuthorizationCodeGrant::TokenRequestProcessor" Collapsed="true">
+    <Position X="2.5" Y="2.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>EAAAAAAAAAAAEAAAAAAAAIAAAAAAgEAAAAAAAAAAAAA=</HashCode>
+      <FileName>include\AuthorizationCodeGrant.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="OAuth2::IAuthorizationServerPolicies">
+    <Position X="4.75" Y="0.5" Width="2.25" />
+    <Members>
+      <Method Name="~IAuthorizationServerPolicies" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAABAAAAAAAEAAAAAAAAIAAAAAIAAAAAAAAAAA=</HashCode>
+      <FileName>include\Interfaces.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="OAuth2::IRequestProcessor">
+    <Position X="1.5" Y="0.5" Width="2" />
+    <Members>
+      <Method Name="~IRequestProcessor" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>EACAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>include\Interfaces.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="OAuth2::IAuthorizationCodeGenerator">
+    <Position X="7.5" Y="0.5" Width="2.25" />
+    <Members>
+      <Method Name="~IAuthorizationCodeGenerator" Hidden="true" />
+    </Members>
+    <NestedTypes>
+      <Struct Name="OAuth2::IAuthorizationCodeGenerator::Grant" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>include\Interfaces.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>ABAAAAAAAAAABAAAAAAAAAAAAAAAAAAAQAAAAAABAAA=</HashCode>
+      <FileName>include\Interfaces.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="OAuth2::AuthorizationCodeGeneratorDecorator&lt;TExt, TInt&gt;" Collapsed="true">
+    <Position X="7.5" Y="2.5" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>EBAAAAAAAAAEBAAAAAAAAAAAAACAAAAAAAAAAAgBAAA=</HashCode>
+      <FileName>include\Interfaces.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="OAuth2::StandardAuthorizationServerPolicies" Collapsed="true">
+    <Position X="4.75" Y="2.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAEAAAAAAAAIAAAAAIAAAAAAAAAAA=</HashCode>
+      <FileName>include\OAuth2.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="OAuth2::AuthorizationServer">
+    <Position X="8" Y="5" Width="2" />
+    <Members>
+      <Field Name="_authorizationEndpoint" Hidden="true" />
+      <Field Name="_tokenEndpoint" Hidden="true" />
+      <Method Name="~AuthorizationServer" Hidden="true" />
+      <Method Name="AuthorizationServer" Hidden="true" />
+      <Method Name="operator=" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAQAAAAAAAAAEACACAAAAAAAAAAAAAgAAJAAAA=</HashCode>
+      <FileName>include\OAuth2.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="OAuth2::IClientAuthorizationFacade">
+    <Position X="3" Y="3.5" Width="2.25" />
+    <Members>
+      <Method Name="~IClientAuthorizationFacade" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAgAAIA=</HashCode>
+      <FileName>include\Interfaces.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="OAuth2::IClientAuthenticationFacade">
+    <Position X="0.5" Y="3.5" Width="2.25" />
+    <Members>
+      <Method Name="~IClientAuthenticationFacade" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAgA=</HashCode>
+      <FileName>include\Interfaces.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="OAuth2::IAuthorizationServerStorage">
+    <Position X="8" Y="3.5" Width="2.25" />
+    <Members>
+      <Method Name="~IAuthorizationServerStorage" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AEAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>include\Interfaces.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="OAuth2::IHttpRequest">
+    <Position X="0.5" Y="5" Width="1.5" />
+    <Members>
+      <Method Name="~IHttpRequest" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAQAAAAAAAAABhQAAAAAAAAAIAAAAAAAgA=</HashCode>
+      <FileName>include\Interfaces.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="OAuth2::IHttpResponse">
+    <Position X="2.25" Y="5" Width="1.5" />
+    <Members>
+      <Method Name="~IHttpResponse" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAEAAAIAAAAAAAAAAAAAAEAAAAAIAAAAACA=</HashCode>
+      <FileName>include\Interfaces.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="OAuth2::IRequestFilter">
+    <Position X="4" Y="5" Width="1.5" />
+    <Members>
+      <Method Name="~IRequestFilter" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAACAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>include\Interfaces.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="OAuth2::IResponseFilter">
+    <Position X="5.75" Y="5" Width="1.5" />
+    <Members>
+      <Method Name="~IResponseFilter" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAACAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>include\Interfaces.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="OAuth2::IUserAuthenticationFacade">
+    <Position X="5.5" Y="3.5" Width="2.25" />
+    <Members>
+      <Method Name="~IUserAuthenticationFacade" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAEACAAAAAAIAAAAAAIAAAAAAAAAAA=</HashCode>
+      <FileName>include\Interfaces.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="OAuth2::ServerEndpoint">
+    <Position X="8" Y="6.25" Width="1.75" />
+    <Members>
+      <Field Name="_requestFilters" Hidden="true" />
+      <Field Name="_requestProcessors" Hidden="true" />
+      <Field Name="_responseFilters" Hidden="true" />
+      <Method Name="~ServerEndpoint" Hidden="true" />
+      <Method Name="operator=" Hidden="true" />
+      <Method Name="pushBackRequestFilter" Hidden="true" />
+      <Method Name="pushBackRequestProcessor" Hidden="true" />
+      <Method Name="pushBackResponseFilter" Hidden="true" />
+      <Method Name="pushFrontRequestFilter" Hidden="true" />
+      <Method Name="pushFrontRequestProcessor" Hidden="true" />
+      <Method Name="pushFrontResponseFilter" Hidden="true" />
+      <Method Name="ServerEndpoint" Hidden="true" />
+    </Members>
+    <NestedTypes>
+      <Typedef Name="OAuth2::ServerEndpoint::RequestProcessorsQueueType" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>include\OAuth2.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Typedef>
+      <Typedef Name="OAuth2::ServerEndpoint::RequestFiltersQueueType" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>include\OAuth2.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Typedef>
+      <Typedef Name="OAuth2::ServerEndpoint::ResponseFiltersQueueType" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>include\OAuth2.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Typedef>
+      <Struct Name="OAuth2::ServerEndpoint::request_can_be_processed_lambda" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>include\OAuth2.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAAgAQAAABAAEAAgAAAAAAAAChAAAABgAgAgAgAAAAA=</HashCode>
+      <FileName>include\OAuth2.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="OAuth2::Client">
+    <Position X="5.75" Y="6.25" Width="1.5" />
+    <Members>
+      <Method Name="Client" Hidden="true" />
+      <Method Name="empty" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAACAAAAAAAAACAABAAAAAAAAAIAAAAAQ=</HashCode>
+      <FileName>include\Interfaces.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Tahoma" Size="8.25" />
+</ClassDiagram>

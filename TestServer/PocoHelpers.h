@@ -33,6 +33,16 @@ public:
     { 
         return _form.find(name) != _form.end();
     }
+
+    virtual std::map<string,string> getParams() const
+    {
+        std::map<string, string> tmp;
+
+        std::copy(_form.begin(), _form.end(), std::inserter(tmp, tmp.begin()));
+
+        return tmp;
+    }
+
     virtual string getParam(const string &name) const 
     { 
         HTMLForm::ConstIterator it = _form.find(name);

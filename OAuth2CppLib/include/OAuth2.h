@@ -21,7 +21,7 @@ void make_error_response(const Errors::Code error, const string &msg, const IHtt
 class StandardAuthorizationServerPolicies : public IAuthorizationServerPolicies
 {
 public:
-    virtual bool isScopeValid(const Client &client, const string &scope) const;
+    virtual bool isScopeValid(const Scope &clientScope, const Scope &requestScope) const;
     virtual bool isValidCallbackUri(const Client &client, const string &uri) const;
     virtual string getCallbackUri(const Client &client) const;
 };

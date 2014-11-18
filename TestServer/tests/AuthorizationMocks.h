@@ -5,6 +5,8 @@
 #include <map>
 //#include <set>
 
+#include <OAuth2.h>
+
 #include <Poco/RegularExpression.h>
 #include <Poco/String.h>
 
@@ -66,32 +68,69 @@ class ClientAuthorizationFacadeMock : public IClientAuthorizationFacade
 private:
     /*std::set*/std::map<string,int> _grants;
     static const string _authzPageBody;
+    
+    
+    //const string _authorizationEndpointUri; //HACK: NOT NEEDED!!!
 
 public:
-    virtual bool isClientAuthorizedByUser(const UserIdType &userId, const ClientIdType &clientId, const string &scope) const
+    // Uri from which processAuthorizationRequest whould be called
+    ClientAuthorizationFacadeMock(const string &authorizationEndpointUri) //HACK: NOT NEEDED!!!
+        //: _authorizationEndpointUri(authorizationEndpointUri)
+    {};
+
+    virtual bool isClientAuthorizedByUser(const UserIdType &userId, const ClientIdType &clientId, const Scope &scope) const
     {
-        //return ServiceLocator::instance().Storage.IsValidGrant??? // grant may exist but with smaller scope! consider makeAuthorizationRequestPage to rule it
-        return true;
+        Grant grant(userId, clientId, scope, "XXX"); //HACK: Hardcoded Empty uri
+
+        return ServiceLocator::instance().Storage->hasValidGrant(grant);
+
+        // or get grant and check it right here!
+
+        //return true; 
     };
 
 
-    virtual void makeAuthorizationRequestPage(const UserIdType &userId, const ClientIdType &clientId, 
-                                                const string &scope, const string &redirect_uri, IHttpResponse &response) const
+    virtual void makeAuthorizationRequestPage(const UserIdType &userId, const ClientIdType &clientId, const Scope &scope, 
+        const IHttpRequest &request,IHttpResponse &response) const
     {
         string msg = ClientAuthorizationFacadeMock::_authzPageBody;
 
         std::ostringstream ostr;
-        ostr << "Client '" << clientId << "' requested access to '" << scope << "' for logged user " << userId;
+        ostr << "Client '" << clientId << "' requested access to '" << scope.toString() << "' for logged user " << userId;
         Poco::RegularExpression("{{Text}}").subst(msg, ostr.str());
 
-        Poco::RegularExpression("{{Action}}").subst(msg,redirect_uri);
+        Poco::RegularExpression("{{Action}}").subst(msg, request.getURI());
+
+        // copy all request parameters to hidden form fields
+        ostr.str("");
+        ostr.clear();
+        map<string,string> params = request.getParams();
+
+        for (map<string,string>::const_iterator it = params.begin(); it != params.end(); ++it)
+            ostr << "<input type='hidden' name='" << it->first << "' value='" << it->second << "'>";
+
+        Poco::RegularExpression("{{HiddenFormValues}}").subst(msg, ostr.str());
 
         response.setBody(msg);
     };
 
     virtual Errors::Code processAuthorizationRequest(const IHttpRequest& request, IHttpResponse &response)
     {
-        throw std::logic_error("not implemented YET!");
+        if (false) //HACK: if(false)
+        {
+            make_error_response(Errors::Code::access_denied, "user denided access to client", request, response);
+            return Errors::Code::access_denied;
+        }
+
+        // Create grant
+        //ServiceLocator::instance().Storage->saveGrant();
+
+        //HACK: should use POST UserAuthenticationFacadeMock::_originalRequestFieldName parameter
+        response.addHeader("Location", request.getHeader("Referer"));
+
+        response.setStatus(302);
+
+        return Errors::ok;
     };
     virtual ~ClientAuthorizationFacadeMock(){};
 };

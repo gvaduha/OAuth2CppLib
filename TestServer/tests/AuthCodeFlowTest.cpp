@@ -5,6 +5,9 @@
 
 using namespace OAuth2::AuthorizationCodeGrant;
 
+void initializeServiceLocator(void);
+
+
 namespace OAuth2
 {
 namespace Test
@@ -15,23 +18,10 @@ void AuthCodeFlowTest::Setup(void)
 {
 };
 
+
 void AuthCodeFlowTest::TestFlow(void)
 {
-    IAuthorizationServerPolicies *policies = new StandardAuthorizationServerPolicies();
-    IUserAuthenticationFacade *uauthn = new UserAuthenticationFacadeMock("User123",false);
-    IClientAuthorizationFacade *cauthz = new ClientAuthorizationFacadeMock();
-    IAuthorizationCodeGenerator *authcodegen = new AuthorizationCodeGeneratorMock();
-    IClientAuthenticationFacade *cauthn = new ClientAuthenticationFacadeMock();
-    
-    MemoryStorageMock *pMemStorage = new MemoryStorageMock();
-
-    Client *c = new Client(); c->Id = "01234"; c->RedirectUri = ""; c->Secret = "abc"; c->Scope = "one two three four";
-    pMemStorage->createClient(c);
-    c = new Client(); c->Id = CorrectClientId; c->RedirectUri = "http://localhost"; c->Secret = CorrectClientSecret; c->Scope = "basic xxx private email";
-    pMemStorage->createClient(c);
-
-    ServiceLocator::ServiceList *list = new ServiceLocator::ServiceList(uauthn, cauthz, cauthn, authcodegen, pMemStorage, policies);
-    ServiceLocator::init(list);
+    initializeServiceLocator();
 
     CodeRequestProcessor crp;
 

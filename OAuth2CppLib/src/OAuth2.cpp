@@ -55,6 +55,7 @@ Errors::Code ServerEndpoint::processRequest(IHttpRequest &request, IHttpResponse
         return Errors::Code::unsupported_grant_type;
     }
 
+    // Only first found processor will process request
     Errors::Code ret = (*it)->processRequest(request, response);
 
     // Postprocess response with filters
@@ -68,7 +69,7 @@ Errors::Code ServerEndpoint::processRequest(IHttpRequest &request, IHttpResponse
 
 
 // ***** StandardAuthorizationServerPolicies start *****
-size_t tokenizeString(const string &in, vector<string> &out)
+size_t tokenizeString(const string &in, vector<string> &out) //HACK: Common library function
 {
     istringstream iss(in);
     copy(istream_iterator<string>(iss), istream_iterator<string>(), back_inserter(out));
@@ -76,19 +77,23 @@ size_t tokenizeString(const string &in, vector<string> &out)
     return out.size();
 };
 
-bool StandardAuthorizationServerPolicies::isScopeValid(const Client &client, const string &scope) const
+//bool StandardAuthorizationServerPolicies::isScopeValid(const Client &client, const string &scope) const
+bool StandardAuthorizationServerPolicies::isScopeValid(const Scope &clientScope, const Scope &requestScope) const
 {
-    if (scope.empty())
-        return false;
+    //if (scope.empty())
+    //    return false;
 
-    vector<string> tokens;
-    tokenizeString(scope, tokens);
+    //vector<string> tokens;
+    //tokenizeString(scope, tokens);
 
-    for(vector<string>::const_iterator it = tokens.begin(); it != tokens.end(); ++it)
-        if (client.Scope.find(*it) == string::npos)
-            return false;
+    //for(vector<string>::const_iterator it = tokens.begin(); it != tokens.end(); ++it)
+    //    if (client.Scope.find(*it) == string::npos)
+    //        return false;
 
-    return true;
+    //return true;
+
+    return true; //HACK: Hardcode return true
+    
 };
 
 

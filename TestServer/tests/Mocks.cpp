@@ -25,44 +25,26 @@ const string UserAuthenticationFacadeMock::UserIdParamName = "UserId";
 
 const string ClientAuthorizationFacadeMock::_authzPageBody = 
     "<html><body>{{Text}}<form id='authz' action='{{Action}}' method='POST'>" \
-    "<button id='submit' type='submit'>Accept</button><button id='deny' type='submit'>Deny</button>"\
+    "{{HiddenFormValues}}"
+    "<button name='submit' type='submit' value='1'>Accept</button><button name='deny' type='submit' value='0'>Deny</button>"\
     "</form></body></html>";
 //const string ClientAuthorizationFacadeMock::UserIdParamName = "UserId";
 
-void TokenFactoryMock::NewToken_Impl(TokenMock *token, const UserIdType &uid, const ClientIdType &cid, const string &scope) const
+TokenBundle BearerTokenFactory::NewTokenBundle(const UserIdType &uid, const ClientIdType &cid, const Scope &scope, const IHttpRequest &request) const
 {
-    token->ClientId = cid;
-    token->UserId = uid;
-    token->Scope = scope;
+    TokenBundle tb;
+    tb.accessToken = "Xjfd54290asn0-j314X";
+    tb.tokenType = "Bearer";
+    tb.expiresIn = "3600";
+    return tb;
 };
 
-void TokenFactoryMock::FromJWT_Impl(TokenMock *token, const string &jwtToken) const
+BearerToken * BearerTokenFactory::FromString(const string &token)
 {
-    istringstream iss(jwtToken);
-    string part;   
-    vector<string> tmp;
-    
-    while ( getline(iss, part, '|') )
-        tmp.push_back(part);
-            
-    if (tmp.size() < 3)
-        return; //Null token
-    
-    token->UserId = tmp[0];
-    token->ClientId = tmp[1];
-    token->Scope = tmp[2];
-};
+    BearerToken *t = new BearerToken();
 
-const bool TokenFactoryMock::IsValidJWS(const string &jwtToken) const
-{
-    return true;
-};
-
-const string TokenFactoryMock::DecodeJWE(const string &jweToken) const
-{
-    return jweToken;
-};
-
+    return t;
+}
 
 };// namespace Test
 };// namespace OAuth2
