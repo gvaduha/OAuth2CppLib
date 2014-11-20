@@ -73,7 +73,7 @@ class ITokenFactory
 {
 public:
     // Return new token in string representation in format "token_type RWS token_data"
-    virtual TokenBundle NewTokenBundle(const UserIdType &uid, const ClientIdType &cid, const Scope &scope, const IHttpRequest &request) const = 0;
+    virtual TokenBundle NewTokenBundle(const Grant &grant, const IHttpRequest &request) const = 0;
     virtual ~ITokenFactory(){};
 };
 
@@ -121,14 +121,16 @@ class IClientAuthorizationFacade
 {
 public:
     // Check existance of record of authorization in AS store for userId->clientId&scope grant
-    virtual bool isClientAuthorizedByUser(const UserIdType &userId, const ClientIdType &clientId, const Scope &scope) const = 0; //NO_THROW
+    virtual bool isClientAuthorizedByUser(const Grant &grant) const = 0; //NO_THROW
     // Create page for user Authorization of client request using request params and/or AS saved client params
     // Saves information about referer page from request parameter
-    virtual void makeAuthorizationRequestPage(const UserIdType &userId, const ClientIdType &clientId, const Scope &scope, 
-                                                const IHttpRequest &request, IHttpResponse &response) const = 0; //NO_THROW
+    virtual void makeAuthorizationRequestPage(const Grant &grant, const IHttpRequest &request, IHttpResponse &response) const = 0; //NO_THROW
     // Endpoint for processing authorization request from page maked by makeAuthorizationRequestPage
     // Should save record for userId->clientId(URI,scope) grant, then restart previous request saved by makeAuthorizationRequestPage
     virtual Errors::Code processAuthorizationRequest(const IHttpRequest& request, IHttpResponse &response) = 0; //NO_THROW
+    // Using for route to form process instead of process of OAuth2 Auth Endpoint
+    static const string authorizationFormMarker;
+
     virtual ~IClientAuthorizationFacade(){};
 };
 
@@ -157,6 +159,8 @@ public:
     // Process request and reply with http response
     virtual Errors::Code processRequest(const IHttpRequest &request, IHttpResponse &response) = 0;
 
+    virtual bool validateParameters(const IHttpRequest &request, string &error) = 0;
+
     virtual ~IRequestProcessor(){};
 };
 
@@ -183,8 +187,8 @@ public:
 class IAuthorizationCodeGenerator
 {
 public:
-    virtual string generateAuthorizationCode(const Grant &params) = 0;
-    virtual bool checkAndRemoveAuthorizationCode(const string &code, Grant &params) = 0;
+    virtual string generateAuthorizationCode(const Grant &params, string &requestUri) = 0;
+    virtual bool checkAndRemoveAuthorizationCode(const string &code, Grant &params, string &requestUri) = 0;
     virtual void removeExpiredCodes() = 0;
     virtual ~IAuthorizationCodeGenerator(){};
 };
@@ -217,7 +221,7 @@ class IAuthorizationServerStorage
 public:
     virtual Client * getClient(const ClientIdType &id) const = 0;
     virtual void saveGrant(const Grant &grant) = 0;
-    virtual bool hasValidGrant(const Grant &grant) const = 0;
+    virtual bool isGrantExist(const Grant &grant) const = 0;
     virtual void saveTokenBundle(const Grant &grant, const TokenBundle &token) = 0;
     // unknownScope is return value for scopes isn't registered in storage
     virtual bool isScopeExist(const Scope &scope, string &unknownScope) const = 0;

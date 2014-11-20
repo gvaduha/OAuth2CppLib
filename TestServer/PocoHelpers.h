@@ -49,7 +49,10 @@ public:
         if (it != _form.end())
             return it->second;
         else
+        {
+            assert(false);
             return "";//HACK: Empty string is legal value! Should be implemented as bool getParam(name, &value)!!!
+        }
     }
     virtual string getURI() const { return _req->getURI(); }
     virtual string getBody() const

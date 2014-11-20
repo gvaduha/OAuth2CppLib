@@ -32,7 +32,7 @@ private:
 class BearerTokenFactory : public ITokenFactory
 {
 public:
-    virtual TokenBundle NewTokenBundle(const UserIdType &uid, const ClientIdType &cid, const Scope &scope, const IHttpRequest &request) const;
+    virtual TokenBundle NewTokenBundle(const Grant &grant, const IHttpRequest &request) const;
     BearerToken * FromString(const string &token);
 };
 
@@ -43,7 +43,7 @@ private:
     mutable map<ClientIdType,SharedPtr<Client>::Type> _clients; // <ClientId, Client>
     vector<string> _scopes; // <Scope>
     map<string, Scope> _uris; // <URI, vector<Scope> >
-    map<string, SharedPtr<Grant>::Type> _grants; // <hash(Grant), Grant>
+    map<string, Grant> _grants; // <hash(Grant), Grant>
     map<string, string> _tokens; // <Token, hash(Grant)>
 
 public:
@@ -87,17 +87,12 @@ public:
 
     virtual void saveGrant(const Grant &grant)
     {
-        //vector<SharedPtr<Grant>::Type>::const_iterator it = std::find(_grants.begin(), _grants.end(), grant);
-
-        //if (it != _grants.end())
-        //    _grants.erase(it);
-
-        //_grants.push_back(SharedPtr<Grant>::Type(&grant));
+        _grants[NaiveHasher::hash(grant)] = grant;
     }
 
-    virtual bool hasValidGrant(const Grant &grant) const
+    virtual bool isGrantExist(const Grant &grant) const
     {
-        return false; //HACK: hardcoded return
+        return _grants.find(NaiveHasher::hash(grant)) != _grants.end() ? true : false;
     }
     
     virtual void saveTokenBundle(const Grant &grant, const TokenBundle &token)
@@ -110,7 +105,7 @@ public:
 
     void createClient(Client *client)
     {
-        _clients[client->Id] = SharedPtr<Client>::Type(client);
+        _clients[client->id] = SharedPtr<Client>::Type(client);
     };
 
     void initScopes(string scope)
@@ -183,16 +178,16 @@ public:
         srand(static_cast<unsigned int>(std::time(NULL))); //sequence is 41, 
     };
 
-    virtual string generateAuthorizationCode(const Grant &grant)
+    virtual string generateAuthorizationCode(const Grant &grant, string &requestUri)
     {
         std::ostringstream oss;
-        oss << grant.userId << "`" << grant.clientId << "`" << grant.scope.toString() << "`" << grant.uri << "`";
+        oss << grant.userId << "`" << grant.clientId << "`" << grant.scope.toString() << "`" << requestUri << "`";
         string code = std::to_string(std::rand());
         _codes[code] = oss.str();
         return code;
     };
 
-    virtual bool checkAndRemoveAuthorizationCode(const string &code, Grant &grant)
+    virtual bool checkAndRemoveAuthorizationCode(const string &code, Grant &grant, string &requestUri)
     {
         if (_codes.find(code) == _codes.end()) return false;
 
@@ -207,7 +202,7 @@ public:
         grant.userId = out[0];
         grant.clientId = out[1];
         grant.scope = out[2];
-        grant.uri = out[3];
+        requestUri = out[3];
 
         _codes.erase(code);
 

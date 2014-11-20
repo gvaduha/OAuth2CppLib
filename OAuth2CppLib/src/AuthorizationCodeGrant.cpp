@@ -1,6 +1,7 @@
 ﻿#include <assert.h>
 #include "AuthorizationCodeGrant.h"
 #include "Helpers.h"
+#include <sstream>
 
 namespace OAuth2
 {
@@ -10,9 +11,20 @@ namespace AuthorizationCodeGrant
 
     using namespace Helpers;
 
+bool CodeRequestProcessor::validateParameters(const IHttpRequest &request, string &error)
+{
+    if (!request.isParamExist(Params::response_type) || !request.isParamExist(Params::client_id))
+    {
+        error = "one of required parameters missing: response_type, client_id";
+        return false;
+    }
+
+    return true;
+}
+
 // Check scope from request against client's scope
 // Return scope along with Errors::ok or Error and response contained error reply
-Errors::Code checkScope(const IHttpRequest &request, IHttpResponse &response, const Scope &clientScope, Scope &scope)
+Errors::Code CodeRequestProcessor::checkScope(const IHttpRequest &request, IHttpResponse &response, const Scope &clientScope, Scope &scope)
 {
     // scope is OPTIONAL parameter by RFC, but should be in request OR registered with client
     // so we could
@@ -35,13 +47,17 @@ Errors::Code checkScope(const IHttpRequest &request, IHttpResponse &response, co
     string unknownScope;
     if (!scope.empty() && !sl.Storage->isScopeExist(scope, unknownScope))
     {
-        make_error_response(Errors::Code::invalid_scope, "unknown scope in request: " + unknownScope, request, response);
+        std::ostringstream oss;
+        oss << "unknown scope in request: " << unknownScope;
+        make_error_response(Errors::Code::invalid_scope, oss.str(), request, response);
         return Errors::Code::invalid_scope;
     }
 
     if (!clientScope.empty() && !sl.Storage->isScopeExist(clientScope, unknownScope))
     {
-        make_error_response(Errors::Code::invalid_scope, "unknown client registered scope: " + unknownScope, request, response);
+        std::ostringstream oss;
+        oss << "unknown client registered scope: " << unknownScope;
+        make_error_response(Errors::Code::invalid_scope, oss.str(), request, response);
         return Errors::Code::invalid_scope;
     }
     
@@ -49,7 +65,9 @@ Errors::Code checkScope(const IHttpRequest &request, IHttpResponse &response, co
     if (!scope.empty() && !clientScope.empty() &&
         !sl.AuthorizationServerPolicies->isScopeValid(clientScope, scope)) // check request scope against client's
     {
-        make_error_response(Errors::Code::invalid_scope, "scope in request is wider than defined by client", request, response);
+        std::ostringstream oss;
+        oss << "scope in request [" << scope.toString() << "] is wider than defined by accepted for client [" << clientScope.toString() << "]";
+        make_error_response(Errors::Code::invalid_scope, oss.str(), request, response);
         return Errors::Code::invalid_scope;
     }
 
@@ -65,6 +83,16 @@ Errors::Code checkScope(const IHttpRequest &request, IHttpResponse &response, co
 
 Errors::Code CodeRequestProcessor::processRequest(const IHttpRequest &request, IHttpResponse &response)
 {
+    ServiceLocator::ServiceList sl = ServiceLocator::instance();
+
+    // authenticate user and get his ID
+    UserIdType uid = sl.UserAuthN->authenticateUser(request);
+    if (uid.empty())
+    {
+        sl.UserAuthN->makeAuthenticationRequestPage(request, response);
+        return Errors::ok; //request_for_authentication?
+    }
+
     // validation
     ClientIdType cid = request.getParam(Params::client_id);
     if (cid.empty())
@@ -73,18 +101,18 @@ Errors::Code CodeRequestProcessor::processRequest(const IHttpRequest &request, I
         return Errors::Code::invalid_request;
     }
 
-    ServiceLocator::ServiceList sl = ServiceLocator::instance();
-
     Client *client = sl.Storage->getClient(cid);
 
     if (!client || client->empty())
     {
-        make_error_response(Errors::Code::unauthorized_client, cid + " client unregistered", request, response); //TODO: + is not optimal in C++? check -> (\+\s*")|("\s*\+)
+        std::ostringstream oss;
+        oss << cid << " client unregistered";
+        make_error_response(Errors::Code::unauthorized_client, oss.str(), request, response);
         return Errors::Code::unauthorized_client;
     }
 
     Scope scope;
-    Errors::Code res = checkScope(request, response, client->Scope, scope);
+    Errors::Code res = checkScope(request, response, client->scope, scope);
 
     if (Errors::ok != res)
         return res;
@@ -92,7 +120,7 @@ Errors::Code CodeRequestProcessor::processRequest(const IHttpRequest &request, I
     // redirect_uri is OPTIONAL parameter by RFC
     string uri = request.getParam(Params::redirect_uri);
     if (uri.empty())
-        if (client->RedirectUri.empty())
+        if (client->redirectUri.empty())
         {
             make_error_response(Errors::Code::invalid_request, "no redirect_uri", request, response);
             return Errors::Code::invalid_request;
@@ -106,29 +134,19 @@ Errors::Code CodeRequestProcessor::processRequest(const IHttpRequest &request, I
             return Errors::Code::invalid_request;
         }
 
-    // authenticate user and get his ID
-    UserIdType uid = sl.UserAuthN->authenticateUser(request);
-    if (uid.empty())
-    {
-        sl.UserAuthN->makeAuthenticationRequestPage(request, response);
-        return Errors::ok; //request_for_authentication?
-    }
+    Grant grant(uid, cid, scope);
 
     // check if application is authorized by user to perform operations on scope
-    bool authorized = sl.ClientAuthZ->isClientAuthorizedByUser(uid, cid, scope);
+    bool authorized = sl.ClientAuthZ->isClientAuthorizedByUser(grant);
     if (!authorized)
     {
-        sl.ClientAuthZ->makeAuthorizationRequestPage(uid, cid, scope, request, response);
+        sl.ClientAuthZ->makeAuthorizationRequestPage(grant, request, response);
         return Errors::ok; //request_for_authorization?
     }
 
     // generate code and make response
     // it's important that redirect_uri is as in request for token request (see RFC6749 4.1.3 request requirements)
-    Grant grant(uid, cid, scope, request.getParam(Params::redirect_uri));
-
-    sl.Storage->saveGrant(grant);
-
-    AuthCodeType code = sl.AuthCodeGen->generateAuthorizationCode(grant);
+    AuthCodeType code = sl.AuthCodeGen->generateAuthorizationCode(grant, request.getParam(Params::redirect_uri));
 
     // we should use original uri from response, because when exchanging code to token
     // redirect_uri is REQUIRED if included in auth code request RFC6749 4.1.3
@@ -150,6 +168,17 @@ void CodeRequestProcessor::makeAuthCodeResponse(const AuthCodeType &code, const 
 };
 
 
+bool TokenRequestProcessor::validateParameters(const IHttpRequest &request, string &error)
+{
+    if (!request.isParamExist(Params::grant_type) || !request.isParamExist(Params::client_id) || !request.isParamExist(Params::code))
+    {
+        error = "one of required parameters missing: grant_type, client_id, code";
+        return false;
+    }
+
+    return true;
+}
+
 Errors::Code TokenRequestProcessor::processRequest(const IHttpRequest &request, IHttpResponse &response)
 {
     ServiceLocator::ServiceList sl = ServiceLocator::instance();
@@ -163,9 +192,10 @@ Errors::Code TokenRequestProcessor::processRequest(const IHttpRequest &request, 
 
     // Parameters of the request that auth code is provided with (i.e. client, user, scope, uri)
     Grant grant;
+    string requestUri;
 
-    if ( !sl.AuthCodeGen->checkAndRemoveAuthorizationCode(request.getParam(Params::code), grant) ||
-        request.getParam(Params::redirect_uri) != grant.uri || 
+    if ( !sl.AuthCodeGen->checkAndRemoveAuthorizationCode(request.getParam(Params::code), grant, requestUri) ||
+        request.getParam(Params::redirect_uri) != requestUri || 
         request.getParam(Params::client_id) != grant.clientId )
     {
         make_error_response(Errors::Code::invalid_request, "code not found", request, response);
@@ -173,7 +203,7 @@ Errors::Code TokenRequestProcessor::processRequest(const IHttpRequest &request, 
     }
 
     // Generate and save token with link to its grant
-    TokenBundle tb = sl.TokenFactory->NewTokenBundle(grant.userId, cid, grant.scope, request);
+    TokenBundle tb = sl.TokenFactory->NewTokenBundle(grant, request);
 
     sl.Storage->saveTokenBundle(grant, tb);
     

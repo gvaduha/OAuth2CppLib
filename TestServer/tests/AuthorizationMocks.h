@@ -67,39 +67,33 @@ class ClientAuthorizationFacadeMock : public IClientAuthorizationFacade
 {
 private:
     /*std::set*/std::map<string,int> _grants;
-    static const string _authzPageBody;
-    
-    
-    //const string _authorizationEndpointUri; //HACK: NOT NEEDED!!!
+    const string _authzPageBody;
 
+    //All static constants should be documented in manual to prevent accidental changes
+    static const string _acceptedFieldName; 
+    static const string _userIdFieldName;
+    
 public:
-    // Uri from which processAuthorizationRequest whould be called
-    ClientAuthorizationFacadeMock(const string &authorizationEndpointUri) //HACK: NOT NEEDED!!!
-        //: _authorizationEndpointUri(authorizationEndpointUri)
-    {};
+    ClientAuthorizationFacadeMock(const string &authzPageBody)
+        : _authzPageBody(authzPageBody)
+    {}
 
-    virtual bool isClientAuthorizedByUser(const UserIdType &userId, const ClientIdType &clientId, const Scope &scope) const
+    virtual bool isClientAuthorizedByUser(const Grant &grant) const
     {
-        Grant grant(userId, clientId, scope, "XXX"); //HACK: Hardcoded Empty uri
-
-        return ServiceLocator::instance().Storage->hasValidGrant(grant);
-
-        // or get grant and check it right here!
-
-        //return true; 
+        return ServiceLocator::instance().Storage->isGrantExist(grant);
     };
 
 
-    virtual void makeAuthorizationRequestPage(const UserIdType &userId, const ClientIdType &clientId, const Scope &scope, 
-        const IHttpRequest &request,IHttpResponse &response) const
+    virtual void makeAuthorizationRequestPage(const Grant &grant, const IHttpRequest &request,IHttpResponse &response) const
     {
         string msg = ClientAuthorizationFacadeMock::_authzPageBody;
 
+        //HACK: {{CONST}} should be moved to static const; clientId, scope, userId should be moved to {{params}} instead of text
         std::ostringstream ostr;
-        ostr << "Client '" << clientId << "' requested access to '" << scope.toString() << "' for logged user " << userId;
+        ostr << "Client '" << grant.clientId << "' requested access to '" << grant.scope.toString() << "' for logged user " << grant.userId;
         Poco::RegularExpression("{{Text}}").subst(msg, ostr.str());
 
-        Poco::RegularExpression("{{Action}}").subst(msg, request.getURI());
+        Poco::RegularExpression("{{Action}}").subst(msg, request.getURI()); //HACK: We don't need parameters consider using getHost+getPath
 
         // copy all request parameters to hidden form fields
         ostr.str("");
@@ -109,21 +103,32 @@ public:
         for (map<string,string>::const_iterator it = params.begin(); it != params.end(); ++it)
             ostr << "<input type='hidden' name='" << it->first << "' value='" << it->second << "'>";
 
+        ostr << "<input type='hidden' name='" << _userIdFieldName << "' value='" << grant.userId << "'>";
+        ostr << "<input type='hidden' name='" << authorizationFormMarker << "'>";
+
         Poco::RegularExpression("{{HiddenFormValues}}").subst(msg, ostr.str());
+        Poco::RegularExpression("{{AcceptFieldName}}").subst(msg, _acceptedFieldName);
 
         response.setBody(msg);
     };
 
     virtual Errors::Code processAuthorizationRequest(const IHttpRequest& request, IHttpResponse &response)
     {
-        if (false) //HACK: if(false)
+        if (!request.isParamExist(_acceptedFieldName))
         {
             make_error_response(Errors::Code::access_denied, "user denided access to client", request, response);
             return Errors::Code::access_denied;
         }
 
-        // Create grant
-        //ServiceLocator::instance().Storage->saveGrant();
+        if (!request.isParamExist(_userIdFieldName) || !request.isParamExist(Params::client_id) || !request.isParamExist(Params::scope))
+        {
+            make_error_response(Errors::Code::invalid_request, "no one or more required parameters user_id, client_id, scope", request, response);
+            return Errors::Code::access_denied;
+        }
+
+        Grant grant(request.getParam(_userIdFieldName), request.getParam(Params::client_id), request.getParam(Params::scope));
+
+        ServiceLocator::instance().Storage->saveGrant(grant);
 
         //HACK: should use POST UserAuthenticationFacadeMock::_originalRequestFieldName parameter
         response.addHeader("Location", request.getHeader("Referer"));
@@ -145,11 +150,11 @@ public:
         string secret = request.getParam(Params::client_secret);
         Client *c = ServiceLocator::instance().Storage->getClient(cid);
 
-        //HACK: case insensetive!
-        if (!c || c->empty() || 0 != Poco::icompare(c->Secret, secret))
+        //HACK: case insensetive! is it OK?
+        if (!c || c->empty() || 0 != Poco::icompare(c->secret, secret))
             return EmptyClientId;
 
-        return c->Id;
+        return c->id;
     }
 
     virtual ~ClientAuthenticationFacadeMock(){};

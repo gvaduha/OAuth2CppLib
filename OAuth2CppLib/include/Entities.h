@@ -11,11 +11,11 @@
 namespace OAuth2
 {
 
-template <typename T>
 class NaiveHasher
 {
 public:
-    static string hash(T obj)
+    template <typename T>
+    static string hash(const T &obj)
     {
         return obj.toString();
     }
@@ -136,18 +136,25 @@ public:
 class Client
 {
 public:
-    ClientIdType Id;
-    string Secret;
-    string RedirectUri;
-    Scope Scope;
+    ClientIdType id;
+    string secret;
+    string redirectUri;
+    Scope scope;
 
     Client()
-        : Id(EmptyClientId)
+        : id(EmptyClientId)
     {}
 
     bool empty()
     {
-        return Id == EmptyClientId;
+        return id == EmptyClientId;
+    }
+
+    string toString() const
+    {
+        std::stringstream  ss;
+        ss << id << ":" << secret << ":" << redirectUri << ":" << scope.toString();
+        return ss.str();
     }
 
 protected:
@@ -163,21 +170,39 @@ struct Grant
     UserIdType userId;
     ClientIdType clientId;
     Scope scope;
-    string uri;
-    Grant(const UserIdType &userId, const ClientIdType &clientId, const Scope &scope, const string &uri)
-        : userId(userId), clientId(clientId), scope(scope), uri(uri) {};
+
+    Grant(const UserIdType &userId, const ClientIdType &clientId, const Scope &scope)
+        : userId(userId), clientId(clientId), scope(scope) {};
     Grant()
-        : userId(""), clientId(""), scope(""), uri("") {};
+        : userId(""), clientId(""), scope("") {};
+
+    Grant & operator=(const Grant rhs)
+    {
+        swap(Grant(rhs));
+        return *this;
+    }
 
     bool operator==(const Grant &rhs) const
     {
         return userId == rhs.userId && clientId == rhs.clientId
-            && rhs.scope.isSubscopeOf(scope) && uri == rhs.uri;
+            && rhs.scope.isSubscopeOf(scope);
     }
 
-protected:
-    Grant(const Grant &rhs);
-    Grant & operator=(const Grant &rhs);
+    string toString() const
+    {
+        std::stringstream  ss;
+        ss << userId << ":" << clientId << ":" << scope.toString();
+        return ss.str();
+    }
+        
+    void swap(Grant &rhs)
+    {
+        using std::swap;
+        
+        userId.swap(rhs.userId);
+        clientId.swap(rhs.clientId);
+        scope.swap(rhs.scope);
+    }
 };
 
 // Tokens and supply information as defined by https://tools.ietf.org/html/rfc6749#section-5

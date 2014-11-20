@@ -15,14 +15,11 @@ static OAuth2::SharedPtr<OAuth2::AuthorizationServer>::Type g_as;
 void initializeServiceLocator();
 OAuth2::AuthorizationServer * createAuth2Server();
 
-class AuthEndpointHTTPRequestHandler : public HTTPRequestHandler
+class HTTPRequestHandlerWrapper : public HTTPRequestHandler
 {
 public:
     virtual void handleRequest(HTTPServerRequest & request, HTTPServerResponse & response)
     {
-        Application& app = Application::instance();
-        app.logger().information("Authorization request from " + request.clientAddress().toString());
-
         //Poco::Net::NameValueCollection cookies;
         //request.getCookies(cookies);
         //response.getCookies(cookies.begin());
@@ -30,33 +27,52 @@ public:
         PocoHttpRequestAdapter rq(&request);
         PocoHttpResponseAdapter rs(&response);
 
-        g_as->authorizationEndpoint(rq,rs);
+        try
+        {
+            handleRequestImpl(rq, rs);
+        }
+        catch (OAuth2::AuthorizationException &ex)
+        {
+            Application::instance().logger().information("E: " + string(ex.what()));
+        }
+    };
+protected:
+    virtual void handleRequestImpl(OAuth2::IHttpRequest & rq, OAuth2::IHttpResponse & rs) = 0;
+};
+
+class AuthEndpointHTTPRequestHandler : public HTTPRequestHandlerWrapper
+{
+protected:
+    virtual void handleRequestImpl(OAuth2::IHttpRequest & rq, OAuth2::IHttpResponse & rs)
+    {
+        Application::instance().logger().information("Z: AuthoriZation request");
+
+        OAuth2::ServiceLocator::ServiceList sl = OAuth2::ServiceLocator::instance();
+
+        if (rq.isParamExist(sl.ClientAuthZ->authorizationFormMarker))
+            sl.ClientAuthZ->processAuthorizationRequest(rq, rs);
+        else
+            g_as->authorizationEndpoint(rq,rs);
     }
 };
 
-class TokenEndpointHTTPRequestHandler : public HTTPRequestHandler
+class TokenEndpointHTTPRequestHandler : public HTTPRequestHandlerWrapper
 {
-public:
-    virtual void handleRequest(HTTPServerRequest & request, HTTPServerResponse & response)
+protected:
+    virtual void handleRequestImpl(OAuth2::IHttpRequest & rq, OAuth2::IHttpResponse & rs)
     {
-		Application::instance().logger().information("Token request from " + request.clientAddress().toString());
-
-        PocoHttpRequestAdapter rq(&request);
-        PocoHttpResponseAdapter rs(&response);
+		Application::instance().logger().information("T: Token request");
 
         g_as->tokenEndpoint(rq,rs);
     }
 };
 
-class AuthenticationEndpointHTTPRequestHandler : public HTTPRequestHandler
+class AuthenticationEndpointHTTPRequestHandler : public HTTPRequestHandlerWrapper
 {
-public:
-    virtual void handleRequest(HTTPServerRequest & request, HTTPServerResponse & response)
+protected:
+    virtual void handleRequestImpl(OAuth2::IHttpRequest & rq, OAuth2::IHttpResponse & rs)
     {
-		Application::instance().logger().information("Authentication request from " + request.clientAddress().toString());
-
-        PocoHttpRequestAdapter rq(&request);
-        PocoHttpResponseAdapter rs(&response);
+		Application::instance().logger().information("N: AutheNtication request");
 
         OAuth2::ServiceLocator::instance().UserAuthN->processAuthenticationRequest(rq, rs);
     }

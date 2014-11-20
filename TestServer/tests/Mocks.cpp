@@ -23,14 +23,10 @@ const string UserAuthenticationFacadeMock::_originalRequestFieldName = "nextPage
 
 const string UserAuthenticationFacadeMock::UserIdParamName = "UserId";
 
-const string ClientAuthorizationFacadeMock::_authzPageBody = 
-    "<html><body>{{Text}}<form id='authz' action='{{Action}}' method='POST'>" \
-    "{{HiddenFormValues}}"
-    "<button name='submit' type='submit' value='1'>Accept</button><button name='deny' type='submit' value='0'>Deny</button>"\
-    "</form></body></html>";
-//const string ClientAuthorizationFacadeMock::UserIdParamName = "UserId";
+const string ClientAuthorizationFacadeMock::_acceptedFieldName = "accepted";
+const string ClientAuthorizationFacadeMock::_userIdFieldName = "user_id";
 
-TokenBundle BearerTokenFactory::NewTokenBundle(const UserIdType &uid, const ClientIdType &cid, const Scope &scope, const IHttpRequest &request) const
+TokenBundle BearerTokenFactory::NewTokenBundle(const Grant &grant, const IHttpRequest &request) const
 {
     TokenBundle tb;
     tb.accessToken = "Xjfd54290asn0-j314X";

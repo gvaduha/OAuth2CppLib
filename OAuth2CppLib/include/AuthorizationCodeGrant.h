@@ -50,8 +50,10 @@ public:
     };
 
     virtual Errors::Code processRequest(const IHttpRequest &request, IHttpResponse &response);
+    virtual bool validateParameters(const IHttpRequest &request, string &error);
 
 private:
+    Errors::Code checkScope(const IHttpRequest &request, IHttpResponse &response, const Scope &clientScope, Scope &scope);
     void makeAuthCodeResponse(const AuthCodeType &code, const string redirect_uri, const IHttpRequest &request, IHttpResponse &response);
 };
 
@@ -67,6 +69,7 @@ public:
     };
 
     virtual Errors::Code processRequest(const IHttpRequest &request, IHttpResponse &response);
+    virtual bool validateParameters(const IHttpRequest &request, string &error);
 
 private:
     void makeTokenResponse(const TokenBundle &tokenBundle, const IHttpRequest &request, IHttpResponse &response);
