@@ -54,8 +54,6 @@ void initializeServiceLocator()
     pMemStorage->createClient( Client("01234",Client::Type::publik,"abc","",Scope("one two three four")) );
     pMemStorage->createClient( Client("ClientID",Client::Type::confedential,"xSecreTx","http://localhost/IbTest/hs/client/oauth"/*"https://www.getpostman.com/oauth2/callback"*/,Scope("basic xxx private email")) );
 
-    ITokenFactory *tokenf = new BearerTokenFactory();
-
-    ServiceLocator::ServiceList *list = new ServiceLocator::ServiceList(uauthn, cauthz, cauthn, authcodegen, pMemStorage, policies, tokenf);
+    ServiceLocator::ServiceList *list = new ServiceLocator::ServiceList(uauthn, cauthz, cauthn, authcodegen, pMemStorage, policies);
     ServiceLocator::init(list);
 }

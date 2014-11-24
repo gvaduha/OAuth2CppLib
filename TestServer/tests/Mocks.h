@@ -17,26 +17,6 @@ namespace Test
     using std::vector;
     using std::map;
 
-class BearerToken
-{
-public:
-    string Scope;
-    UserIdType UserId;
-    ClientIdType ClientId;
-private:
-    BearerToken() {};
-
-    friend class BearerTokenFactory;
-};
-
-class BearerTokenFactory : public ITokenFactory //HACK: Not fully implemented
-{
-public:
-    virtual TokenBundle NewTokenBundle(const Grant &grant, const IHttpRequest &request) const;
-    BearerToken * FromString(const string &token);
-};
-
-
 
 class HTTPRequestResponseMock : public IHttpRequest, public IHttpResponse
 {
@@ -49,7 +29,7 @@ private:
     string _uri;
     string _body;
     string _verb;
-    HttpStatusType _status;
+    httpstatus_t _status;
 
 public:
     HTTPRequestResponseMock() {};
@@ -79,7 +59,7 @@ public:
     //virtual void addParam(const string &name, const string &value) {_params[name]=value;};
     virtual void setURI(string const &uri) {_uri =uri;};
     virtual void setBody(string const &body) {_body = body;};
-    virtual void setStatus(HttpStatusType status) {_status = status;};
+    virtual void setStatus(httpstatus_t status) {_status = status;};
 };
 
 

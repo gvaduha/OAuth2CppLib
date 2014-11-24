@@ -23,21 +23,5 @@ const string UserAuthenticationFacadeMock::_originalRequestFieldName = "nextPage
 
 const string UserAuthenticationFacadeMock::UserIdParamName = "UserId";
 
-TokenBundle BearerTokenFactory::NewTokenBundle(const Grant &grant, const IHttpRequest &request) const
-{
-    TokenBundle tb;
-    tb.accessToken = "Xjfd54290asn0-j314X";
-    tb.tokenType = "Bearer";
-    tb.expiresIn = "3600";
-    return tb;
-};
-
-BearerToken * BearerTokenFactory::FromString(const string &token)
-{
-    BearerToken *t = new BearerToken();
-
-    return t;
-}
-
 };// namespace Test
 };// namespace OAuth2

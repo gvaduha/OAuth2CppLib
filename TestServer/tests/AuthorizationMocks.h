@@ -22,16 +22,16 @@ class UserAuthenticationFacadeMock : public IUserAuthenticationFacade
 private:
     static const string _authnPageBody;
     static const string _originalRequestFieldName;
-    const UserIdType _returnUser;
+    const userid_t _returnUser;
     bool _hackFirstRequestFlag;
 
 public:
     static const string UserIdParamName;
 
-    UserAuthenticationFacadeMock(const UserIdType returnUser, const bool requestAuth)
+    UserAuthenticationFacadeMock(const userid_t returnUser, const bool requestAuth)
         : _returnUser(returnUser), _hackFirstRequestFlag(requestAuth)
     {};
-    virtual UserIdType authenticateUser(const IHttpRequest &request)
+    virtual userid_t authenticateUser(const IHttpRequest &request)
     { 
         if (_hackFirstRequestFlag)
             return EmptyUserId;
@@ -39,7 +39,7 @@ public:
         return _returnUser;
         //!!! return request.getParam(UserAuthenticationFacadeMock::UserIdParamName);
     };
-    virtual void makeAuthenticationRequestPage(const IHttpRequest &request, IHttpResponse &response)
+    virtual void makeAuthenticationRequestPage(const IHttpRequest &request, IHttpResponse &response) const
     {
         string msg = UserAuthenticationFacadeMock::_authnPageBody;
 

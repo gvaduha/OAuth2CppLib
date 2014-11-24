@@ -61,7 +61,7 @@ public:
         this->erase( std::unique(this->begin(), this->end()), this->end() );
 
         // remove empty strings
-        vector<string>::iterator it = std::remove_if(this->begin(), this->end(), std::mem_fun_ref(&string::empty));
+        std::vector<string>::iterator it = std::remove_if(this->begin(), this->end(), std::mem_fun_ref(&string::empty));
         this->erase(it, this->end());
     };
 
@@ -144,7 +144,7 @@ struct Client
         publik
     };
 
-    ClientIdType id;
+    clientid_t id;
     Type type;
     string secret;
     string redirectUri;
@@ -154,7 +154,7 @@ struct Client
         : id(EmptyClientId)
     {}
 
-    Client(ClientIdType id, Type type, string secret, string redirectUri, Scope scope)
+    Client(clientid_t id, Type type, string secret, string redirectUri, Scope scope)
         : id(id), type(type), secret(secret), redirectUri(redirectUri), scope(scope)
     {}
 
@@ -174,7 +174,8 @@ struct Client
 
     Client & operator=(const Client &rhs)
     {
-        swap(Client(rhs));
+        Client tmp(rhs);
+        swap(tmp);
         return *this;
     }
 
@@ -193,12 +194,12 @@ struct Client
 
 struct Grant
 {
-    UserIdType userId;
-    ClientIdType clientId;
+    userid_t userId;
+    clientid_t clientId;
     Scope scope;
     time_t expire; //TODO: extension for future use
 
-    Grant(const UserIdType &userId, const ClientIdType &clientId, const Scope &scope, const time_t expire = 0)
+    Grant(const userid_t &userId, const clientid_t &clientId, const Scope &scope, const time_t expire = 0)
         : userId(userId), clientId(clientId), scope(scope), expire(expire) {};
     Grant()
         : userId(""), clientId(""), scope(""), expire(0) {};
@@ -214,7 +215,8 @@ struct Grant
 
     Grant & operator=(const Grant rhs)
     {
-        swap(Grant(rhs));
+        Grant tmp(rhs);
+        swap(tmp);
         return *this;
     }
 
@@ -248,29 +250,15 @@ struct Grant
     }
 };
 
-//struct Token
-//{
-//    string value;
-//    time_t expire;
-//};
-
-// Tokens and supply information as defined by https://tools.ietf.org/html/rfc6749#section-5
-struct TokenBundle
+struct Token
 {
-//private:
-//    Token _accessToken;
-//    Token _refreshToken;
-//public:
-//    string accessToken()
-//    {
-//    }
-    string accessToken;
-    string tokenType;
-    string expiresIn;
-    string refreshToken;
-    string scope;
+    const string value;
+    const string type;
+    time_t expiresIn;
 
-    //EXTEND: RFC6749 allow additional parameters in form of JSON key: value pairs
+    Token(const string &value, const string &type, time_t expiresIn)
+        : value(value), type(type), expiresIn(expiresIn)
+    {}
 };
 
 };

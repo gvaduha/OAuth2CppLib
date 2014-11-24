@@ -49,12 +49,15 @@ public:
         return request.getParam(Params::response_type) == Params::code;
     };
 
-    virtual Errors::Code processRequest(const IHttpRequest &request, IHttpResponse &response);
-    virtual bool validateParameters(const IHttpRequest &request, string &error);
+    virtual Errors::Code processRequest(const IHttpRequest &request, IHttpResponse &response) const;
+    virtual bool validateParameters(const IHttpRequest &request, string &error) const;
+
+protected:
+    virtual std::map<string,string> materializeTokenBundle(const Grant &grant) const;
 
 private:
-    Errors::Code checkScope(const IHttpRequest &request, IHttpResponse &response, const Scope &clientScope, Scope &scope);
-    void makeAuthCodeResponse(const AuthCodeType &code, const string redirect_uri, const IHttpRequest &request, IHttpResponse &response);
+    Errors::Code checkScope(const IHttpRequest &request, IHttpResponse &response, const Scope &clientScope, Scope &scope) const;
+    void makeAuthCodeResponse(const authcode_t &code, const string redirect_uri, const IHttpRequest &request, IHttpResponse &response) const;
 };
 
 class TokenRequestProcessor : public IRequestProcessor
@@ -68,11 +71,14 @@ public:
         return request.getParam(Params::grant_type) == "authorization_code";
     };
 
-    virtual Errors::Code processRequest(const IHttpRequest &request, IHttpResponse &response);
-    virtual bool validateParameters(const IHttpRequest &request, string &error);
+    virtual Errors::Code processRequest(const IHttpRequest &request, IHttpResponse &response) const;
+    virtual bool validateParameters(const IHttpRequest &request, string &error) const;
+
+protected:
+    virtual std::map<string,string> materializeTokenBundle(const Grant &grant) const;
 
 private:
-    void makeTokenResponse(const TokenBundle &tokenBundle, const IHttpRequest &request, IHttpResponse &response);
+    void makeTokenResponse(const std::map<string,string> &tokenBundle, const IHttpRequest &request, IHttpResponse &response) const;
 };
 
 };// namespace AuthorizationCodeGrant

@@ -27,10 +27,12 @@ Client Client::EmptyClient = Client();
 
 void make_error_response(const Errors::Code error, const string &msg, const IHttpRequest &request, IHttpResponse &response)
 {
+    typedef std::pair<string, string> jsonpair_t;
+
     response.setStatus(400);
     response.addHeader("Content-type","application/json; charset=utf-8");
     
-    jsonmap_t map;
+    std::map<string, string> map;
     map.insert(jsonpair_t(Params::error,Errors::getText(error)));
     map.insert(jsonpair_t(Params::error_description,msg));
 

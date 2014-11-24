@@ -29,7 +29,7 @@ public:
 // selecting first appropriate (RequestProcessingUnit.filter match)
 class ServerEndpoint //final
 {
-public:
+public: //TODO: Request filters isn't using now!
     typedef std::list<SharedPtr<IRequestProcessor>::Type> RequestProcessorsQueueType;
     typedef std::list<SharedPtr<IRequestFilter>::Type> RequestFiltersQueueType;
     typedef std::list<SharedPtr<IResponseFilter>::Type> ResponseFiltersQueueType;

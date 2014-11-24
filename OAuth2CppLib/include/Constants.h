@@ -7,8 +7,8 @@
 namespace OAuth2
 {
 
-    extern const UserIdType EmptyUserId;
-    extern const ClientIdType EmptyClientId;
+    extern const userid_t EmptyUserId;
+    extern const clientid_t EmptyClientId;
 
 namespace Params
 {

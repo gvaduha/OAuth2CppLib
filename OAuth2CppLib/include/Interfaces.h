@@ -62,20 +62,10 @@ class IHttpResponse
 public:
     virtual void addHeader(string const &name, string const &value) = 0;
     virtual void setBody(string const &body) = 0;
-    virtual void setStatus(HttpStatusType status) = 0;
+    virtual void setStatus(httpstatus_t status) = 0;
     virtual string formatUriParameters(std::map<string,string> params) const = 0;
     virtual ~IHttpResponse(){};
 };
-
-// Abstract token factory
-class ITokenFactory
-{
-public:
-    // Return new token in string representation in format "token_type RWS token_data"
-    virtual TokenBundle NewTokenBundle(const Grant &grant, const IHttpRequest &request) const = 0;
-    virtual ~ITokenFactory(){};
-};
-
 
 // Facade to (in most cases) External User Authorization Subsystem, intended to:
 // 1) create user authentication page 
@@ -87,10 +77,10 @@ public:
     // Gets user's credentials from request and return userId if authorized, else return EmptyUserIdId
     // Function has intimate knowledge about how external User Authentication subsystem 
     // store user or session information in request and how to get user id from it
-    virtual UserIdType authenticateUser(const IHttpRequest &request) = 0;
+    virtual userid_t authenticateUser(const IHttpRequest &request) = 0;
     // Create page for user Authentication
     // Saves information about referer page from request parameter
-    virtual void makeAuthenticationRequestPage(const IHttpRequest &request, IHttpResponse &response) = 0;
+    virtual void makeAuthenticationRequestPage(const IHttpRequest &request, IHttpResponse &response) const = 0;
     // Endpoint for processing authentication request from page maked by makeAuthenticationRequestPage
     // Should authenticate user, then restart previous request saved by makeAuthenticationRequestPage including information about user Authentication
     // Function should include user authentication in the way external User Authentication subsystem does, to enable authenticateUser to grab this
@@ -107,7 +97,7 @@ class IClientAuthenticationFacade
 public:
     // Gets client's credentials from request and return clientId if authorized, else return EmptyClientIdId
     // Check existance of record for client with credentials from request in AS store
-    virtual Client authenticateClient(const IHttpRequest &request) = 0; //NO_THROW
+    virtual Client authenticateClient(const IHttpRequest &request) const = 0; //NO_THROW
     virtual ~IClientAuthenticationFacade(){};
 };
 
@@ -126,7 +116,7 @@ public:
     virtual void makeAuthorizationRequestPage(const Grant &grant, const IHttpRequest &request, IHttpResponse &response) const = 0; //NO_THROW
     // Endpoint for processing authorization request from page maked by makeAuthorizationRequestPage
     // Should save record for userId->clientId(URI,scope) grant, then restart previous request saved by makeAuthorizationRequestPage
-    virtual Errors::Code processAuthorizationRequest(const IHttpRequest& request, IHttpResponse &response) = 0; //NO_THROW
+    virtual Errors::Code processAuthorizationRequest(const IHttpRequest& request, IHttpResponse &response) const = 0; //NO_THROW
     // Using for route to form process instead of process of OAuth2 Auth Endpoint
     static const string authorizationFormMarker;
 
@@ -156,10 +146,14 @@ public:
     // Decide whether filter can process request
     virtual bool canProcessRequest(const IHttpRequest &request) const = 0;
     // Process request and reply with http response
-    virtual Errors::Code processRequest(const IHttpRequest &request, IHttpResponse &response) = 0;
-
-    virtual bool validateParameters(const IHttpRequest &request, string &error) = 0;
-
+    virtual Errors::Code processRequest(const IHttpRequest &request, IHttpResponse &response) const = 0;
+    // Validate all RFC REQUIRED request parameters
+    virtual bool validateParameters(const IHttpRequest &request, string &error) const = 0;
+protected:
+    // Create token bundle depending on the type of process. Should save tokens to store, no one else could do it correctly!
+    // Return map of key values for JSON token response (example in https://tools.ietf.org/html/rfc6749#section-4.1.4)
+    virtual std::map<string,string> materializeTokenBundle(const Grant &grant) const = 0;
+public:
     virtual ~IRequestProcessor(){};
 };
 
@@ -193,6 +187,7 @@ public:
 };
 
 //TODO: !!!!????
+//HACK: Decorators implementation commented-out
 //template <typename TExt, typename TInt>
 //class AuthorizationCodeGeneratorDecorator : IAuthorizationCodeGenerator
 //{
@@ -215,16 +210,19 @@ public:
 //    virtual ~AuthorizationCodeGeneratorDecorator(){};
 //};
 
+//TODO: Not stable interface; some inconsistancy about object and obj_id parameters in different functions
 class IAuthorizationServerStorage
 {
 public:
-    virtual Client getClient(const ClientIdType &id) const = 0;
+    virtual Client getClient(const clientid_t &id) const = 0;
     virtual Grant getGrant(const string &token) const = 0;
     virtual void saveGrant(const Grant &grant) = 0;
     // Check grant existance in storage
     virtual bool isGrantExist(const Grant &grant) const = 0;
     //
-    virtual void saveTokenBundle(const Grant &grant, const TokenBundle &token) = 0;
+    virtual void saveToken(const Grant &grant, const Token &token) = 0;
+    //
+    virtual void saveRefreshToken(const clientid_t &cid, const string &token) = 0;
     // Check all scopes in Scope vector registered in store
     // unknownScope is return value for scopes isn't registered in storage
     virtual bool isScopeExist(const Scope &scope, string &unknownScope) const = 0;
@@ -245,13 +243,11 @@ public:
         const SharedPtr<IAuthorizationCodeGenerator>::Type AuthCodeGen;
         const SharedPtr<IAuthorizationServerStorage>::Type Storage;
         const SharedPtr<IAuthorizationServerPolicies>::Type AuthorizationServerPolicies;
-        const SharedPtr<ITokenFactory>::Type TokenFactory;
 
         ServiceList(IUserAuthenticationFacade *uauthn, IClientAuthorizationFacade *cauthz, IClientAuthenticationFacade *cauthn,
-            IAuthorizationCodeGenerator *authcodegen, IAuthorizationServerStorage *storage, IAuthorizationServerPolicies *policies,
-            ITokenFactory *tokenf)
+            IAuthorizationCodeGenerator *authcodegen, IAuthorizationServerStorage *storage, IAuthorizationServerPolicies *policies)
             : UserAuthN(uauthn), ClientAuthZ(cauthz), ClientAuthN(cauthn), AuthCodeGen(authcodegen),
-            Storage(storage), AuthorizationServerPolicies(policies), TokenFactory(tokenf)
+            Storage(storage), AuthorizationServerPolicies(policies)
         {}
 
         friend class ServiceLocator;
@@ -262,7 +258,7 @@ public:
         {
             if (!this->AuthCodeGen ||  !this->AuthorizationServerPolicies || !this->ClientAuthN
                 || !this->ClientAuthZ || !this->Storage || !this->UserAuthN
-                || !this->TokenFactory )
+                )
                 throw AuthorizationException("Can't initialize ServiceLocator with null values");
         };
     };
@@ -291,6 +287,5 @@ private:
     ServiceLocator & operator=(const ServiceLocator &);
     ServiceLocator(const ServiceLocator &);
 };
-
 
 }; //namespace OAuth2

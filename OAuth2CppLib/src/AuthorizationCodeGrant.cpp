@@ -11,7 +11,7 @@ namespace AuthorizationCodeGrant
 
     using namespace Helpers;
 
-bool CodeRequestProcessor::validateParameters(const IHttpRequest &request, string &error)
+bool CodeRequestProcessor::validateParameters(const IHttpRequest &request, string &error) const
 {
     if (!request.isParamExist(Params::response_type) || !request.isParamExist(Params::client_id))
     {
@@ -24,7 +24,7 @@ bool CodeRequestProcessor::validateParameters(const IHttpRequest &request, strin
 
 // Check scope from request against client's scope
 // Return scope along with Errors::ok or Error and response contained error reply
-Errors::Code CodeRequestProcessor::checkScope(const IHttpRequest &request, IHttpResponse &response, const Scope &clientScope, Scope &scope)
+Errors::Code CodeRequestProcessor::checkScope(const IHttpRequest &request, IHttpResponse &response, const Scope &clientScope, Scope &scope) const
 {
     // scope is OPTIONAL parameter by RFC, but should be in request OR registered with client
     // so we could
@@ -81,12 +81,12 @@ Errors::Code CodeRequestProcessor::checkScope(const IHttpRequest &request, IHttp
     return Errors::ok;
 }
 
-Errors::Code CodeRequestProcessor::processRequest(const IHttpRequest &request, IHttpResponse &response)
+Errors::Code CodeRequestProcessor::processRequest(const IHttpRequest &request, IHttpResponse &response) const
 {
     ServiceLocator::ServiceList sl = ServiceLocator::instance();
 
     // authenticate user and get his ID
-    UserIdType uid = sl.UserAuthN->authenticateUser(request);
+    userid_t uid = sl.UserAuthN->authenticateUser(request);
     if (uid.empty())
     {
         sl.UserAuthN->makeAuthenticationRequestPage(request, response);
@@ -94,7 +94,7 @@ Errors::Code CodeRequestProcessor::processRequest(const IHttpRequest &request, I
     }
 
     // validation
-    ClientIdType cid = request.getParam(Params::client_id);
+    clientid_t cid = request.getParam(Params::client_id);
     if (cid.empty())
     {
         make_error_response(Errors::Code::invalid_request, "client_id is empty", request, response);
@@ -146,7 +146,7 @@ Errors::Code CodeRequestProcessor::processRequest(const IHttpRequest &request, I
 
     // generate code and make response
     // it's important that redirect_uri is as in request for token request (see RFC6749 4.1.3 request requirements)
-    AuthCodeType code = sl.AuthCodeGen->generateAuthorizationCode(grant, request.getParam(Params::redirect_uri));
+    authcode_t code = sl.AuthCodeGen->generateAuthorizationCode(grant, request.getParam(Params::redirect_uri));
 
     // we should use original uri from response, because when exchanging code to token
     // redirect_uri is REQUIRED if included in auth code request RFC6749 4.1.3
@@ -154,7 +154,7 @@ Errors::Code CodeRequestProcessor::processRequest(const IHttpRequest &request, I
     return Errors::Code::ok;
 };
 
-void CodeRequestProcessor::makeAuthCodeResponse(const AuthCodeType &code, const string redirect_uri, const IHttpRequest &request, IHttpResponse &response)
+void CodeRequestProcessor::makeAuthCodeResponse(const authcode_t &code, const string redirect_uri, const IHttpRequest &request, IHttpResponse &response) const
 {
     std::map<string,string> params;
     params[Params::code] = code;
@@ -167,8 +167,15 @@ void CodeRequestProcessor::makeAuthCodeResponse(const AuthCodeType &code, const 
     response.setStatus(302);
 };
 
+std::map<string,string> CodeRequestProcessor::materializeTokenBundle(const Grant &grant) const
+{
+    throw std::exception("CodeRequestProcessor::materialize not implemented");
+}
 
-bool TokenRequestProcessor::validateParameters(const IHttpRequest &request, string &error)
+//
+/////////////// TokenRequestProcessor Begin Implementation /////////////////
+//
+bool TokenRequestProcessor::validateParameters(const IHttpRequest &request, string &error) const
 {
     if (!request.isParamExist(Params::grant_type) || !request.isParamExist(Params::client_id) || !request.isParamExist(Params::code))
     {
@@ -179,7 +186,7 @@ bool TokenRequestProcessor::validateParameters(const IHttpRequest &request, stri
     return true;
 }
 
-Errors::Code TokenRequestProcessor::processRequest(const IHttpRequest &request, IHttpResponse &response)
+Errors::Code TokenRequestProcessor::processRequest(const IHttpRequest &request, IHttpResponse &response) const
 {
     ServiceLocator::ServiceList sl = ServiceLocator::instance();
     Client c = sl.ClientAuthN->authenticateClient(request);
@@ -202,17 +209,16 @@ Errors::Code TokenRequestProcessor::processRequest(const IHttpRequest &request, 
         return Errors::Code::invalid_grant;
     }
 
-    // Generate and save token with link to its grant
-    TokenBundle tb = sl.TokenFactory->NewTokenBundle(grant, request);
+    std::map<string, string> tb;
 
-    sl.Storage->saveTokenBundle(grant, tb);
-    
+    tb = materializeTokenBundle(grant);
+
     makeTokenResponse(tb, request, response);
     return Errors::Code::ok;
 };
 
 
-void TokenRequestProcessor::makeTokenResponse(const TokenBundle &tokenBundle, const IHttpRequest &request, IHttpResponse &response)
+void TokenRequestProcessor::makeTokenResponse(const std::map<string,string> &tokenBundle, const IHttpRequest &request, IHttpResponse &response) const
 {
     // These options are REQUIRED by https://tools.ietf.org/html/rfc6749#section-5
     response.addHeader("Content-Type","application/json;charset=UTF-8");
@@ -220,15 +226,36 @@ void TokenRequestProcessor::makeTokenResponse(const TokenBundle &tokenBundle, co
     response.addHeader("Pragma","no-cache");
 
     //HACK: JSON library now using boost
-    jsonmap_t map;
-    map.insert(jsonpair_t(Params::access_token, tokenBundle.accessToken));
-    map.insert(jsonpair_t(Params::token_type, tokenBundle.tokenType));
-    map.insert(jsonpair_t(Params::expires_in, tokenBundle.expiresIn));
-    map.insert(jsonpair_t(Params::refresh_token, tokenBundle.refreshToken));
-
-    response.setBody(mapToJSON(map));
+    response.setBody(mapToJSON(tokenBundle));
     response.setStatus(200);
 };
+
+std::map<string,string> TokenRequestProcessor::materializeTokenBundle(const Grant &grant) const
+{
+    //HACK: Change to pointer to storage after SharedPtr cleanup
+    ServiceLocator::ServiceList sl = ServiceLocator::instance();
+
+    // Create and save access token
+    Token aT("x58FE54AD045B9x", "Bearer", time_t(3600));
+    sl.Storage->saveToken(grant, aT);
+
+    // Create and save refresh token
+    string rT = "xRFRSHx";
+    sl.Storage->saveRefreshToken(grant.clientId, rT);
+
+    std::map<string,string> map;
+    typedef std::pair<string, string> strpair_t;
+
+    std::stringstream ss;
+    ss << aT.expiresIn;
+
+    map.insert(strpair_t(Params::access_token, aT.value));
+    map.insert(strpair_t(Params::token_type, aT.type));
+    map.insert(strpair_t(Params::expires_in, ss.str()));
+    map.insert(strpair_t(Params::refresh_token, rT));
+
+    return map;
+}
 
 
 }; //namespace AuthorizationCodeGrant

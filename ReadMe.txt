@@ -2,6 +2,22 @@
     OAuth2 CPP 03 Library Project Overview
 ========================================================================
 
+//TODO:
+- Remove logic from storage
+- Make interface for storage politics
+- Make profile as normal resource
+- URI as class
+
+- Template function in TokenFactory call T Token.Create
+- TokenFactory::Create by type
+
+- Make language resource loader Interface
+- Make request.context.getUserID() (it will eliminate dependence on UserAuthN)
+- Remove darn SharedPtrs
+- Review URI parsing against RFC3986 #3
+
+
+
 class RFC_values_for_grant_types
 {
     //Implicit Grant
