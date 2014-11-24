@@ -35,7 +35,7 @@ Errors::Code CodeRequestProcessor::checkScope(const IHttpRequest &request, IHttp
     // The order of ifs MANDATORY here!
     scope = Scope(request.getParam(Params::scope));
 
-    ServiceLocator::ServiceList sl = ServiceLocator::instance();
+    const ServiceLocator::ServiceList *sl = ServiceLocator::instance();
     // 0:
     if (scope.empty() && clientScope.empty())
     {
@@ -45,7 +45,7 @@ Errors::Code CodeRequestProcessor::checkScope(const IHttpRequest &request, IHttp
     
     // 1/2: scopes exist
     string unknownScope;
-    if (!scope.empty() && !sl.Storage->isScopeExist(scope, unknownScope))
+    if (!scope.empty() && !sl->Storage->isScopeExist(scope, unknownScope))
     {
         std::ostringstream oss;
         oss << "unknown scope in request: " << unknownScope;
@@ -53,7 +53,7 @@ Errors::Code CodeRequestProcessor::checkScope(const IHttpRequest &request, IHttp
         return Errors::Code::invalid_scope;
     }
 
-    if (!clientScope.empty() && !sl.Storage->isScopeExist(clientScope, unknownScope))
+    if (!clientScope.empty() && !sl->Storage->isScopeExist(clientScope, unknownScope))
     {
         std::ostringstream oss;
         oss << "unknown client registered scope: " << unknownScope;
@@ -63,7 +63,7 @@ Errors::Code CodeRequestProcessor::checkScope(const IHttpRequest &request, IHttp
     
     // 3: check against server politics if both scopes are present
     if (!scope.empty() && !clientScope.empty() &&
-        !sl.AuthorizationServerPolicies->isScopeValid(clientScope, scope)) // check request scope against client's
+        !sl->AuthorizationServerPolicies->isScopeValid(clientScope, scope)) // check request scope against client's
     {
         std::ostringstream oss;
         oss << "scope in request [" << scope.toString() << "] is wider than defined by accepted for client [" << clientScope.toString() << "]";
@@ -83,13 +83,13 @@ Errors::Code CodeRequestProcessor::checkScope(const IHttpRequest &request, IHttp
 
 Errors::Code CodeRequestProcessor::processRequest(const IHttpRequest &request, IHttpResponse &response) const
 {
-    ServiceLocator::ServiceList sl = ServiceLocator::instance();
+    const ServiceLocator::ServiceList *sl = ServiceLocator::instance();
 
     // authenticate user and get his ID
-    userid_t uid = sl.UserAuthN->authenticateUser(request);
+    userid_t uid = sl->UserAuthN->authenticateUser(request);
     if (uid.empty())
     {
-        sl.UserAuthN->makeAuthenticationRequestPage(request, response);
+        sl->UserAuthN->makeAuthenticationRequestPage(request, response);
         return Errors::ok; //request_for_authentication?
     }
 
@@ -101,7 +101,7 @@ Errors::Code CodeRequestProcessor::processRequest(const IHttpRequest &request, I
         return Errors::Code::invalid_request;
     }
 
-    Client client = sl.Storage->getClient(cid);
+    Client client = sl->Storage->getClient(cid);
 
     if (client.empty())
     {
@@ -126,9 +126,9 @@ Errors::Code CodeRequestProcessor::processRequest(const IHttpRequest &request, I
             return Errors::Code::invalid_request;
         }
         else
-            uri = sl.AuthorizationServerPolicies->getCallbackUri(client); // if request has no redirect_uri, substitute it from client's
+            uri = sl->AuthorizationServerPolicies->getCallbackUri(client); // if request has no redirect_uri, substitute it from client's
     else
-        if (!sl.AuthorizationServerPolicies->isValidCallbackUri(client, uri)) // check that request redirect_uri against client's
+        if (!sl->AuthorizationServerPolicies->isValidCallbackUri(client, uri)) // check that request redirect_uri against client's
         {
             make_error_response(Errors::Code::invalid_request, "invalid redirect_uri", request, response);
             return Errors::Code::invalid_request;
@@ -137,16 +137,16 @@ Errors::Code CodeRequestProcessor::processRequest(const IHttpRequest &request, I
     Grant grant(uid, cid, scope);
 
     // check if application is authorized by user to perform operations on scope
-    bool authorized = sl.ClientAuthZ->isClientAuthorizedByUser(grant);
+    bool authorized = sl->ClientAuthZ->isClientAuthorizedByUser(grant);
     if (!authorized)
     {
-        sl.ClientAuthZ->makeAuthorizationRequestPage(grant, request, response);
+        sl->ClientAuthZ->makeAuthorizationRequestPage(grant, request, response);
         return Errors::ok; //request_for_authorization?
     }
 
     // generate code and make response
     // it's important that redirect_uri is as in request for token request (see RFC6749 4.1.3 request requirements)
-    authcode_t code = sl.AuthCodeGen->generateAuthorizationCode(grant, request.getParam(Params::redirect_uri));
+    authcode_t code = sl->AuthCodeGen->generateAuthorizationCode(grant, request.getParam(Params::redirect_uri));
 
     // we should use original uri from response, because when exchanging code to token
     // redirect_uri is REQUIRED if included in auth code request RFC6749 4.1.3
@@ -188,8 +188,8 @@ bool TokenRequestProcessor::validateParameters(const IHttpRequest &request, stri
 
 Errors::Code TokenRequestProcessor::processRequest(const IHttpRequest &request, IHttpResponse &response) const
 {
-    ServiceLocator::ServiceList sl = ServiceLocator::instance();
-    Client c = sl.ClientAuthN->authenticateClient(request);
+    const ServiceLocator::ServiceList *sl = ServiceLocator::instance();
+    Client c = sl->ClientAuthN->authenticateClient(request);
 
     if (c.empty())
     {
@@ -201,7 +201,7 @@ Errors::Code TokenRequestProcessor::processRequest(const IHttpRequest &request, 
     Grant grant(Grant::EmptyGrant);
     string requestUri;
 
-    if ( !sl.AuthCodeGen->checkAndRemoveAuthorizationCode(request.getParam(Params::code), grant, requestUri) ||
+    if ( !sl->AuthCodeGen->checkAndRemoveAuthorizationCode(request.getParam(Params::code), grant, requestUri) ||
         request.getParam(Params::redirect_uri) != requestUri || 
         request.getParam(Params::client_id) != grant.clientId )
     {
@@ -233,15 +233,15 @@ void TokenRequestProcessor::makeTokenResponse(const std::map<string,string> &tok
 std::map<string,string> TokenRequestProcessor::materializeTokenBundle(const Grant &grant) const
 {
     //HACK: Change to pointer to storage after SharedPtr cleanup
-    ServiceLocator::ServiceList sl = ServiceLocator::instance();
+    const ServiceLocator::ServiceList *sl = ServiceLocator::instance();
 
     // Create and save access token
     Token aT("x58FE54AD045B9x", "Bearer", time_t(3600));
-    sl.Storage->saveToken(grant, aT);
+    sl->Storage->saveToken(grant, aT);
 
     // Create and save refresh token
     string rT = "xRFRSHx";
-    sl.Storage->saveRefreshToken(grant.clientId, rT);
+    sl->Storage->saveRefreshToken(grant.clientId, rT);
 
     std::map<string,string> map;
     typedef std::pair<string, string> strpair_t;

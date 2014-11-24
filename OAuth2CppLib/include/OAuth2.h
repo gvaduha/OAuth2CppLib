@@ -145,7 +145,7 @@ public:
         copy(std::istream_iterator<string>(iss), std::istream_iterator<string>(), std::back_inserter(parts));
 
         //HACK: not only grants but scope! uri!
-        if (ServiceLocator::instance().Storage->getGrant(parts[1]).empty())
+        if (ServiceLocator::instance()->Storage->getGrant(parts[1]).empty())
         {
             make_error_response(OAuth2::Errors::invalid_grant, "invalid token", request, response);
             return false;

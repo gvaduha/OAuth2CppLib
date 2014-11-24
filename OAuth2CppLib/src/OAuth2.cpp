@@ -19,7 +19,7 @@ using namespace Helpers;
 
 const string IClientAuthorizationFacade::authorizationFormMarker = "AUTORIZATIONFORM";
 
-SharedPtr<ServiceLocator::ServiceList>::Type ServiceLocator::_impl = NULL;
+ServiceLocator::ServiceList * ServiceLocator::_impl = NULL;
 
 Grant Grant::EmptyGrant = Grant();
 Client Client::EmptyClient = Client();

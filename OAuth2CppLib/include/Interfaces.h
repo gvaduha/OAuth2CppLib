@@ -192,8 +192,8 @@ public:
 //class AuthorizationCodeGeneratorDecorator : IAuthorizationCodeGenerator
 //{
 //private:
-//    typename SharedPtr<TExt>::Type _exto;
-//    typename SharedPtr<TInt>::Type _into;
+//    typename TExt *_exto;
+//    typename TInt *_into;
 //
 //public:
 //    AuthorizationCodeGeneratorDecorator(TExt *exto, TInt *into)
@@ -207,7 +207,11 @@ public:
 //
 //    virtual bool checkAndRemoveAuthorizationCode(const string &code, Grant &params) = 0;
 //    virtual void removeExpiredCodes() = 0;
-//    virtual ~AuthorizationCodeGeneratorDecorator(){};
+//    virtual ~AuthorizationCodeGeneratorDecorator()
+//    {
+//        delete _exto;
+//        delete _exto;
+//    };
 //};
 
 //TODO: Not stable interface; some inconsistancy about object and obj_id parameters in different functions
@@ -237,12 +241,12 @@ class ServiceLocator
 public:
     struct ServiceList
     {
-        const SharedPtr<IUserAuthenticationFacade>::Type UserAuthN;
-        const SharedPtr<IClientAuthorizationFacade>::Type ClientAuthZ;
-        const SharedPtr<IClientAuthenticationFacade>::Type ClientAuthN;
-        const SharedPtr<IAuthorizationCodeGenerator>::Type AuthCodeGen;
-        const SharedPtr<IAuthorizationServerStorage>::Type Storage;
-        const SharedPtr<IAuthorizationServerPolicies>::Type AuthorizationServerPolicies;
+        IUserAuthenticationFacade *UserAuthN;
+        IClientAuthorizationFacade *ClientAuthZ;
+        IClientAuthenticationFacade *ClientAuthN;
+        IAuthorizationCodeGenerator *AuthCodeGen;
+        IAuthorizationServerStorage *Storage;
+        IAuthorizationServerPolicies *AuthorizationServerPolicies;
 
         ServiceList(IUserAuthenticationFacade *uauthn, IClientAuthorizationFacade *cauthz, IClientAuthenticationFacade *cauthn,
             IAuthorizationCodeGenerator *authcodegen, IAuthorizationServerStorage *storage, IAuthorizationServerPolicies *policies)
@@ -252,34 +256,62 @@ public:
 
         friend class ServiceLocator;
 
+        ~ServiceList()
+        {
+            delete UserAuthN;
+            delete ClientAuthZ;
+            delete ClientAuthN;
+            delete AuthCodeGen;
+            delete Storage;
+            delete AuthorizationServerPolicies;
+        };
+
     private:
         //FRAGILE CODE: Should be revised every time ServiceList changed!
-        void checkForNullPtrs()
+        bool hasNullPtrs()
         {
             if (!this->AuthCodeGen ||  !this->AuthorizationServerPolicies || !this->ClientAuthN
                 || !this->ClientAuthZ || !this->Storage || !this->UserAuthN
                 )
-                throw AuthorizationException("Can't initialize ServiceLocator with null values");
+                return true;
+            else
+                return false;
         };
     };
 
 private:
-    static SharedPtr<ServiceList>::Type _impl;
+    static ServiceList *_impl;
 
 public:
-    static const ServiceList & instance()
+    static const ServiceList * instance()
     {
         if (!_impl)
             throw AuthorizationException("Service locator for AS not initialized. Call init first.");
 
-        return *_impl;
+        return _impl;
     };
 
     //  Init must be called before any access to Instance. SharedPtr should guarantee atomic operation.
-    static void init(ServiceList* services)
+    static void init(ServiceList *services)
     {
-        services->checkForNullPtrs();
-        _impl.swap(SharedPtr<ServiceList>::Type(services));
+        if (services->hasNullPtrs())
+        {
+            delete services;
+            throw AuthorizationException("Can't initialize ServiceLocator with null values");
+        }
+        else
+        {
+            std::swap(_impl, services);
+
+            if (services)
+                delete services;
+        }
+    };
+
+    ~ServiceLocator()
+    {
+        if (_impl)
+            delete _impl;
     };
 
 private:

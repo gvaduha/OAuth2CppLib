@@ -53,10 +53,10 @@ protected:
     {
         Application::instance().logger().information("Z: AuthoriZation request");
 
-        OAuth2::ServiceLocator::ServiceList sl = OAuth2::ServiceLocator::instance();
+        const OAuth2::ServiceLocator::ServiceList *sl = OAuth2::ServiceLocator::instance();
 
-        if (rq.isParamExist(sl.ClientAuthZ->authorizationFormMarker))
-            sl.ClientAuthZ->processAuthorizationRequest(rq, rs);
+        if (rq.isParamExist(sl->ClientAuthZ->authorizationFormMarker))
+            sl->ClientAuthZ->processAuthorizationRequest(rq, rs);
         else
             g_as->authorizationEndpoint(rq,rs);
     }
@@ -80,7 +80,7 @@ protected:
     {
 		Application::instance().logger().information("N: AutheNtication request");
 
-        OAuth2::ServiceLocator::instance().UserAuthN->processAuthenticationRequest(rq, rs);
+        OAuth2::ServiceLocator::instance()->UserAuthN->processAuthenticationRequest(rq, rs);
     }
 };
 

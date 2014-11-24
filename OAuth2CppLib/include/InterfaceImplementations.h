@@ -23,7 +23,7 @@ public:
     {
         clientid_t cid = static_cast<clientid_t>(request.getParam(Params::client_id));
         string secret = request.getParam(Params::client_secret);
-        Client c = ServiceLocator::instance().Storage->getClient(cid);
+        Client c = ServiceLocator::instance()->Storage->getClient(cid);
 
         if (c.empty() || secret.empty() || 0 != secret.compare(c.secret))
             return Client::EmptyClient;
@@ -52,7 +52,7 @@ public:
 
     virtual bool isClientAuthorizedByUser(const Grant &grant) const
     {
-        return ServiceLocator::instance().Storage->isGrantExist(grant);
+        return ServiceLocator::instance()->Storage->isGrantExist(grant);
     };
 
 
@@ -100,7 +100,7 @@ public:
 
         Grant grant(request.getParam(_userIdFieldName), request.getParam(Params::client_id), request.getParam(Params::scope));
 
-        ServiceLocator::instance().Storage->saveGrant(grant);
+        ServiceLocator::instance()->Storage->saveGrant(grant);
 
         //HACK: should use POST UserAuthenticationFacadeMock::_originalRequestFieldName parameter
         response.addHeader("Location", request.getHeader("Referer"));
