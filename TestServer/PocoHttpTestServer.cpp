@@ -10,7 +10,7 @@
 #include <OAuth2.h>
 //#include <AuthorizationCodeGrant.h>
 
-static OAuth2::SharedPtr<OAuth2::AuthorizationServer>::Type g_as;
+static OAuth2::AuthorizationServer* g_as;
 
 void initializeServiceLocator();
 OAuth2::AuthorizationServer * createAuth2Server();
@@ -120,6 +120,11 @@ HTTPRequestHandler* MyRequestHandlerFactory::createRequestHandler(const HTTPServ
     {
         return new AuthenticationEndpointHTTPRequestHandler;
     }
+    else if (icompare(uri.getPath(),"/reinit") == 0)
+    {
+        initializeTestServer();
+        return 0;
+    }
     else
     {
         return new ResourceServerEndpointHTTPRequestHandler;
@@ -132,8 +137,8 @@ void initializeTestServer()
 {
     try
     {
-    initializeServiceLocator();
-        g_as.swap(OAuth2::SharedPtr<OAuth2::AuthorizationServer>::Type(createAuth2Server()));
+        initializeServiceLocator();
+        g_as = createAuth2Server();
     }
     catch (OAuth2::AuthorizationException &ex)
     {

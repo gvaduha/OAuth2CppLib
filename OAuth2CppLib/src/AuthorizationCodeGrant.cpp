@@ -232,7 +232,6 @@ void TokenRequestProcessor::makeTokenResponse(const std::map<string,string> &tok
 
 std::map<string,string> TokenRequestProcessor::materializeTokenBundle(const Grant &grant) const
 {
-    //HACK: Change to pointer to storage after SharedPtr cleanup
     const ServiceLocator::ServiceList *sl = ServiceLocator::instance();
 
     // Create and save access token

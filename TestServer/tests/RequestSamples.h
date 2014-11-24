@@ -13,33 +13,33 @@ namespace Test
 
 struct RequestSamples
 {
-    SharedPtr<HTTPRequestResponseMock>::Type Empty;
-    SharedPtr<HTTPRequestResponseMock>::Type Bad1;
-    SharedPtr<HTTPRequestResponseMock>::Type Bad2;
-    SharedPtr<HTTPRequestResponseMock>::Type Good1;
-    SharedPtr<HTTPRequestResponseMock>::Type Good2;
+    HTTPRequestResponseMock Empty;
+    HTTPRequestResponseMock Bad1;
+    HTTPRequestResponseMock Bad2;
+    HTTPRequestResponseMock Good1;
+    HTTPRequestResponseMock Good2;
 
     RequestSamples()
     {
         HTTPRequestResponseMock::MapType headers;
-        Empty.reset(new HTTPRequestResponseMock(headers));
+        Empty = HTTPRequestResponseMock(headers);
     
         headers[""] = "";
         headers[Params::response_type] = "xxx";
         headers[Params::client_id] = "nosuchlient";
-        Bad1.reset(new HTTPRequestResponseMock(headers));
+        Bad1 = HTTPRequestResponseMock(headers);
     
         headers[Params::client_id] = CorrectClientId;
         headers[Params::scope] = "pron";
-        Bad2.reset(new HTTPRequestResponseMock(headers));
+        Bad2 = HTTPRequestResponseMock(headers);
 
         headers[Params::client_secret] = CorrectClientSecret;
         headers[Params::response_type] = Params::code;
         headers[Params::scope] = CorrectScope;
-        Good1.reset(new HTTPRequestResponseMock(headers));
+        Good1 = HTTPRequestResponseMock(headers);
 
         headers[UserAuthenticationFacadeMock::UserIdParamName] = CorrectUserId;
-        Good1.reset(new HTTPRequestResponseMock(headers));
+        Good1 = HTTPRequestResponseMock(headers);
     };
 
 };

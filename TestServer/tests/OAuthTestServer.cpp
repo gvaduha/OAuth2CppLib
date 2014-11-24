@@ -10,19 +10,19 @@ OAuth2::AuthorizationServer * createAuth2Server()
 {
     using namespace OAuth2;
 
-    ServerEndpoint::RequestFiltersQueueType* authRequestFilters = new ServerEndpoint::RequestFiltersQueueType();
-    ServerEndpoint::ResponseFiltersQueueType* authResponseFilters = new ServerEndpoint::ResponseFiltersQueueType();
-    ServerEndpoint::RequestProcessorsQueueType* authRequestProcessors = new ServerEndpoint::RequestProcessorsQueueType();
+    ServerEndpoint::RequestFiltersQueueType authRequestFilters;
+    ServerEndpoint::ResponseFiltersQueueType authResponseFilters;
+    ServerEndpoint::RequestProcessorsQueueType authRequestProcessors;
     
-    authRequestProcessors->push_back(OAuth2::SharedPtr<IRequestProcessor>::Type(new AuthorizationCodeGrant::CodeRequestProcessor()));
+    authRequestProcessors.push_back(new AuthorizationCodeGrant::CodeRequestProcessor());
     
     ServerEndpoint* authep = new ServerEndpoint(authRequestFilters, authRequestProcessors, authResponseFilters);
     
-    ServerEndpoint::RequestFiltersQueueType* tokenRequestFilters = new ServerEndpoint::RequestFiltersQueueType();
-    ServerEndpoint::ResponseFiltersQueueType* tokenResponseFilters = new ServerEndpoint::ResponseFiltersQueueType();
-    ServerEndpoint::RequestProcessorsQueueType* tokenRequestProcessors = new ServerEndpoint::RequestProcessorsQueueType();
+    ServerEndpoint::RequestFiltersQueueType tokenRequestFilters;
+    ServerEndpoint::ResponseFiltersQueueType tokenResponseFilters;
+    ServerEndpoint::RequestProcessorsQueueType tokenRequestProcessors;
     
-    tokenRequestProcessors->push_back(OAuth2::SharedPtr<IRequestProcessor>::Type(new AuthorizationCodeGrant::TokenRequestProcessor()));
+    tokenRequestProcessors.push_back(new AuthorizationCodeGrant::TokenRequestProcessor());
     
     ServerEndpoint* tokenep = new ServerEndpoint(tokenRequestFilters, tokenRequestProcessors, tokenResponseFilters);
     

@@ -2,13 +2,11 @@
 #include "TestUtilities.h"
 #include "Mocks.h"
 #include <OAuth2.h>
-#include <memory>
 
 namespace OAuth2
 {
 namespace Test
 {
-    using std::shared_ptr;
 
 class TestEntities
 {

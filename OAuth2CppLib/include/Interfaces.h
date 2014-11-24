@@ -291,7 +291,7 @@ public:
         return _impl;
     };
 
-    //  Init must be called before any access to Instance. SharedPtr should guarantee atomic operation.
+    //  Init must be called before any access to Instance
     static void init(ServiceList *services)
     {
         if (services->hasNullPtrs())

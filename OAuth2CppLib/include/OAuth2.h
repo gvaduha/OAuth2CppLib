@@ -30,14 +30,14 @@ public:
 class ServerEndpoint //final
 {
 public: //TODO: Request filters isn't using now!
-    typedef std::list<SharedPtr<IRequestProcessor>::Type> RequestProcessorsQueueType;
-    typedef std::list<SharedPtr<IRequestFilter>::Type> RequestFiltersQueueType;
-    typedef std::list<SharedPtr<IResponseFilter>::Type> ResponseFiltersQueueType;
+    typedef std::list<IRequestProcessor *> RequestProcessorsQueueType;
+    typedef std::list<IRequestFilter *> RequestFiltersQueueType;
+    typedef std::list<IResponseFilter *> ResponseFiltersQueueType;
 
 private:
-    SharedPtr<RequestProcessorsQueueType>::Type _requestProcessors;
-    SharedPtr<RequestFiltersQueueType>::Type _requestFilters;
-    SharedPtr<ResponseFiltersQueueType>::Type _responseFilters;
+    RequestProcessorsQueueType _requestProcessors;
+    RequestFiltersQueueType _requestFilters;
+    ResponseFiltersQueueType _responseFilters;
     
 
     struct request_can_be_processed_lambda : std::unary_function<IRequestProcessor, bool>
@@ -46,7 +46,7 @@ private:
             : _request(request)
         {};
 
-        bool operator()(const SharedPtr<IRequestProcessor>::Type &filter) const
+        bool operator()(const IRequestProcessor *filter) const
         { 
             return filter->canProcessRequest(_request); 
         }
@@ -56,7 +56,9 @@ private:
     };
 
 public:
-    ServerEndpoint(RequestFiltersQueueType *requestFilters, RequestProcessorsQueueType *requestProcessors, ResponseFiltersQueueType *responseFilters);
+    ServerEndpoint(RequestFiltersQueueType requestFilters, RequestProcessorsQueueType requestProcessors, ResponseFiltersQueueType responseFilters)
+        : _requestProcessors(requestProcessors), _requestFilters(requestFilters), _responseFilters(responseFilters)
+    {};
 
     // Process incoming request and return response
     // first request preprocessing by set of request filters, than processor selected 
@@ -64,39 +66,17 @@ public:
     // request param can be changed by filters, so parmeter should be copied before call
     Errors::Code processRequest(IHttpRequest &request, IHttpResponse &response) const;
 
-    // All push functions are NOT thread safe because no runtime Endpoint addition expected
-    inline void pushFrontRequestFilter(IRequestFilter *filter)
-    {
-        _requestFilters->push_front(SharedPtr<IRequestFilter>::Type(filter));
-    };
-
-    inline void pushBackRequestFilter(IRequestFilter *filter)
-    {
-        _requestFilters->push_back(SharedPtr<IRequestFilter>::Type(filter));
-    };
-
-    inline void pushFrontResponseFilter(IResponseFilter *filter)
-    {
-        _responseFilters->push_front(SharedPtr<IResponseFilter>::Type(filter));
-    };
-
-    inline void pushBackResponseFilter(IResponseFilter *filter)
-    {
-        _responseFilters->push_back(SharedPtr<IResponseFilter>::Type(filter));
-    };
-
-    inline void pushFrontRequestProcessor(IRequestProcessor *processor)
-    {
-        _requestProcessors->push_front(SharedPtr<IRequestProcessor>::Type(processor));
-    };
-
-    inline void pushBackRequestProcessor(IRequestProcessor *processor)
-    {
-        _requestProcessors->push_back(SharedPtr<IRequestProcessor>::Type(processor));
-    };
-
     ~ServerEndpoint()
-    {};
+    {
+        for( RequestFiltersQueueType::const_iterator it = _requestFilters.begin(); it != _requestFilters.end(); ++it ) 
+            delete *it;
+
+        for( ResponseFiltersQueueType::const_iterator it = _responseFilters.begin(); it != _responseFilters.end(); ++it )
+            delete *it;
+
+        for( RequestProcessorsQueueType::const_iterator it = _requestProcessors.begin(); it != _requestProcessors.end(); ++it )
+            delete *it;
+    };
 
 private:
     ServerEndpoint(const ServerEndpoint &);
@@ -109,12 +89,15 @@ private:
 class AuthorizationServer //final
 {
 private:
-    SharedPtr<ServerEndpoint>::Type _authorizationEndpoint;
-    SharedPtr<ServerEndpoint>::Type _tokenEndpoint;
+    ServerEndpoint *_authorizationEndpoint;
+    ServerEndpoint *_tokenEndpoint;
 public:
     AuthorizationServer(ServerEndpoint* authorizationEndpoint, ServerEndpoint* tokenEndpoint)
         : _authorizationEndpoint(authorizationEndpoint), _tokenEndpoint(tokenEndpoint)
-    {}
+    {
+        if (!authorizationEndpoint || !tokenEndpoint)
+            throw AuthorizationException("Authorization server endpoints must not be null");
+    }
 
     Errors::Code authorizationEndpoint(IHttpRequest &request, IHttpResponse &response) const
     {
@@ -127,7 +110,10 @@ public:
     };
 
     ~AuthorizationServer()
-    {};
+    {
+        delete _authorizationEndpoint;
+        delete _tokenEndpoint;
+    };
 private:
     AuthorizationServer(const AuthorizationServer &);
     AuthorizationServer & operator=(const AuthorizationServer &);

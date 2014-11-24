@@ -41,22 +41,17 @@ void make_error_response(const Errors::Code error, const string &msg, const IHtt
 
 
 // ***** ServerEndpoint begin *****
-ServerEndpoint::ServerEndpoint(RequestFiltersQueueType *requestFilters, RequestProcessorsQueueType *requestProcessors, ResponseFiltersQueueType *responseFilters)
-    : _requestProcessors(requestProcessors), _requestFilters(requestFilters), _responseFilters(responseFilters)
-{};
-
-
 Errors::Code ServerEndpoint::processRequest(IHttpRequest &request, IHttpResponse &response) const
 {
     // Preprocess request with filters
     //std::for_each(_requestFilters->begin(), _requestFilters->end(), std::bind2nd( std::mem_fun_ref( &IRequestFilter::filter ), request ));
-    for(RequestFiltersQueueType::const_iterator it = _requestFilters->begin(); it != _requestFilters->end(); ++it)
+    for(RequestFiltersQueueType::const_iterator it = _requestFilters.begin(); it != _requestFilters.end(); ++it)
         (*it)->filter(request);
 
     // Choose request processor
-    RequestProcessorsQueueType::const_iterator it = find_if(_requestProcessors->begin(), _requestProcessors->end(), request_can_be_processed_lambda(request));
+    RequestProcessorsQueueType::const_iterator it = find_if(_requestProcessors.begin(), _requestProcessors.end(), request_can_be_processed_lambda(request));
     
-    if (it == _requestProcessors->end()) // Didn't find filter
+    if (it == _requestProcessors.end()) // Didn't find filter
     {
         make_error_response(Errors::Code::unsupported_grant_type, "don't find appropriate request processor", request, response);
         return Errors::Code::unsupported_grant_type;
@@ -75,7 +70,7 @@ Errors::Code ServerEndpoint::processRequest(IHttpRequest &request, IHttpResponse
 
     // Postprocess response with filters
     //std::for_each(_responseFilters->begin(), _responseFilters->end(), std::bind2nd( std::mem_fun_ref( &IResponseFilter::filter ), response ));
-    for(ResponseFiltersQueueType::const_iterator it = _responseFilters->begin(); it != _responseFilters->end(); ++it)
+    for(ResponseFiltersQueueType::const_iterator it = _responseFilters.begin(); it != _responseFilters.end(); ++it)
         (*it)->filter(request, response);
 
     return ret;

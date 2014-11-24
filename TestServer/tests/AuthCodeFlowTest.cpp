@@ -25,23 +25,23 @@ void AuthCodeFlowTest::TestFlow(void)
 
     CodeRequestProcessor crp;
 
-    assert(!crp.canProcessRequest(*_samples.Empty));
-    assert(!crp.canProcessRequest(*_samples.Bad1));
-    assert(crp.canProcessRequest(*_samples.Good1));
+    assert(!crp.canProcessRequest(_samples.Empty));
+    assert(!crp.canProcessRequest(_samples.Bad1));
+    assert(crp.canProcessRequest(_samples.Good1));
 
     HTTPRequestResponseMock r;
 
-    crp.processRequest(*_samples.Empty, r);
+    crp.processRequest(_samples.Empty, r);
     
     assert(r.getBody() == "{\"error\":\"invalid_request\"}");
 
-    crp.processRequest(*_samples.Bad1, r);
+    crp.processRequest(_samples.Bad1, r);
     assert(r.getBody() == "{\"error\":\"unauthorized_client\"}");
 
-    crp.processRequest(*_samples.Bad2, r);
+    crp.processRequest(_samples.Bad2, r);
     assert(r.getBody() == "{\"error\":\"invalid_scope\"}");
 
-    crp.processRequest(*_samples.Good1, r);
+    crp.processRequest(_samples.Good1, r);
     assert(!r.getParam(Params::code).empty());
 }
 
