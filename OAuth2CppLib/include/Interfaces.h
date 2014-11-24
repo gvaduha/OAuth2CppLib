@@ -1,7 +1,6 @@
 ﻿
-//HACK:
-//TODO:  MAKE SWEEP AND REMOVE CLASSES FROM HERE!!!!
-//HACK:
+//HACK: MAKE SWEEP AND REMOVE CLASSES FROM HERE!!!!
+//TODO: MAKE SWEEP AND REMOVE CLASSES FROM HERE!!!!
 
 #pragma once
 #include "Types.h"
@@ -108,7 +107,7 @@ class IClientAuthenticationFacade
 public:
     // Gets client's credentials from request and return clientId if authorized, else return EmptyClientIdId
     // Check existance of record for client with credentials from request in AS store
-    virtual ClientIdType authenticateClient(const IHttpRequest &request) = 0; //NO_THROW
+    virtual Client authenticateClient(const IHttpRequest &request) = 0; //NO_THROW
     virtual ~IClientAuthenticationFacade(){};
 };
 
@@ -219,12 +218,17 @@ public:
 class IAuthorizationServerStorage
 {
 public:
-    virtual Client * getClient(const ClientIdType &id) const = 0;
+    virtual Client getClient(const ClientIdType &id) const = 0;
+    virtual Grant getGrant(const string &token) const = 0;
     virtual void saveGrant(const Grant &grant) = 0;
+    // Check grant existance in storage
     virtual bool isGrantExist(const Grant &grant) const = 0;
+    //
     virtual void saveTokenBundle(const Grant &grant, const TokenBundle &token) = 0;
+    // Check all scopes in Scope vector registered in store
     // unknownScope is return value for scopes isn't registered in storage
     virtual bool isScopeExist(const Scope &scope, string &unknownScope) const = 0;
+    // Check that given URI belongs to one of the scope in scope vector
     virtual bool isUriInScope(const string &uri, const Scope &scope) const = 0;
     virtual ~IAuthorizationServerStorage(){};
 };

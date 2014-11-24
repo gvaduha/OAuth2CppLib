@@ -21,6 +21,9 @@ const string IClientAuthorizationFacade::authorizationFormMarker = "AUTORIZATION
 
 SharedPtr<ServiceLocator::ServiceList>::Type ServiceLocator::_impl = NULL;
 
+Grant Grant::EmptyGrant = Grant();
+Client Client::EmptyClient = Client();
+
 
 void make_error_response(const Errors::Code error, const string &msg, const IHttpRequest &request, IHttpResponse &response)
 {

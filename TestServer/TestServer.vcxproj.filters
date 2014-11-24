@@ -32,10 +32,10 @@
     <ClInclude Include="tests\AuthCodeFlowTest.h">
       <Filter>Tests</Filter>
     </ClInclude>
-    <ClInclude Include="PocoHelpers.h" />
     <ClInclude Include="tests\AuthorizationMocks.h">
       <Filter>Tests</Filter>
     </ClInclude>
     <ClInclude Include="PocoHttpTestServer.h" />
+    <ClInclude Include="PocoHttpAdapters.h" />
   </ItemGroup>
 </Project>

@@ -1,6 +1,7 @@
 #include <Types.h>
 #include <OAuth2.h>
 #include <AuthorizationCodeGrant.h>
+#include <InterfaceImplementations.h>
 
 #include "Mocks.h"
 #include "AuthorizationMocks.h"
@@ -34,27 +35,24 @@ void initializeServiceLocator()
     using namespace OAuth2::Test;
 
     const string authzPageBody = 
-    "<html><body>{{Text}}<form id='authz' action='{{Action}}' method='POST'>" \
-    "{{HiddenFormValues}}"
-    "<button name='{{AcceptFieldName}}' type='submit' value='1'>Accept</button><button name='denied' type='submit' value='1'>Deny</button>"\
+    "<html><body><<Text>><form id='authz' action='<<Action>>' method='POST'>" \
+    "<<HiddenFormValues>>"
+    "<button name='<<AcceptFieldName>>' type='submit' value='1'>Accept</button><button name='denied' type='submit' value='1'>Deny</button>"\
     "</form></body></html>";
 
 
     IAuthorizationServerPolicies *policies = new StandardAuthorizationServerPolicies();
     IUserAuthenticationFacade *uauthn = new UserAuthenticationFacadeMock("User123",true);
-    IClientAuthorizationFacade *cauthz = new ClientAuthorizationFacadeMock(authzPageBody);
-    IAuthorizationCodeGenerator *authcodegen = new AuthorizationCodeGeneratorMock();
-    IClientAuthenticationFacade *cauthn = new ClientAuthenticationFacadeMock();
+    IClientAuthorizationFacade *cauthz = new DefaultClientAuthorizationFacade(authzPageBody);
+    IAuthorizationCodeGenerator *authcodegen = new SimpleAuthorizationCodeGenerator();
+    IClientAuthenticationFacade *cauthn = new RequestParameterClientAuthenticationFacade();
     
     SimpleMemoryStorage *pMemStorage = new SimpleMemoryStorage();
 
     pMemStorage->initScopes("email profile xxx basic private c++ c\"\\  ");
 
-    Client *c = new Client(); c->id = "01234"; c->redirectUri = ""; c->secret = "abc"; c->scope = Scope("one two three four");
-    pMemStorage->createClient(c);
-    c = new Client(); c->id = "ClientID"; c->redirectUri = "http://localhost/IbTest/hs/client/oauth"/*"https://www.getpostman.com/oauth2/callback"*/; c->secret = "xsecreTx"; c->scope = Scope("basic xxx private email");
-    pMemStorage->createClient(c);
-
+    pMemStorage->createClient( Client("01234",Client::Type::publik,"abc","",Scope("one two three four")) );
+    pMemStorage->createClient( Client("ClientID",Client::Type::confedential,"xSecreTx","http://localhost/IbTest/hs/client/oauth"/*"https://www.getpostman.com/oauth2/callback"*/,Scope("basic xxx private email")) );
 
     ITokenFactory *tokenf = new BearerTokenFactory();
 

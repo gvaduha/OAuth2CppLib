@@ -5,6 +5,8 @@
     <ClCompile Include="src\Helpers.cpp" />
     <ClCompile Include="src\OAuth2.cpp" />
     <ClCompile Include="src\Constants.cpp" />
+    <ClCompile Include="src\InterfaceImplementations.cpp" />
+    <ClCompile Include="src\Entities.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Helpers.h" />
@@ -14,6 +16,7 @@
     <ClInclude Include="include\OAuth2.h" />
     <ClInclude Include="include\Types.h" />
     <ClInclude Include="include\Entities.h" />
+    <ClInclude Include="include\InterfaceImplementations.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagram.cd" />

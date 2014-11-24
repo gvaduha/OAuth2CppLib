@@ -29,95 +29,13 @@ private:
     friend class BearerTokenFactory;
 };
 
-class BearerTokenFactory : public ITokenFactory
+class BearerTokenFactory : public ITokenFactory //HACK: Not fully implemented
 {
 public:
     virtual TokenBundle NewTokenBundle(const Grant &grant, const IHttpRequest &request) const;
     BearerToken * FromString(const string &token);
 };
 
-
-class SimpleMemoryStorage : public IAuthorizationServerStorage
-{
-private:
-    mutable map<ClientIdType,SharedPtr<Client>::Type> _clients; // <ClientId, Client>
-    vector<string> _scopes; // <Scope>
-    map<string, Scope> _uris; // <URI, vector<Scope> >
-    map<string, Grant> _grants; // <hash(Grant), Grant>
-    map<string, string> _tokens; // <Token, hash(Grant)>
-
-public:
-    virtual Client * getClient(const ClientIdType &id) const
-    {
-        return _clients[id].get();
-    };
-
-    virtual bool isScopeExist(const Scope &scope, string &unknownScope) const
-    {
-        if (scope.empty() || _scopes.empty())
-            return false;
-
-        vector<string> tmp;
-        std::set_difference(scope.begin(), scope.end(), _scopes.begin(), _scopes.end(),
-            std::inserter(tmp, tmp.begin()));
-
-        if (tmp.size() > 0) // create unknownScope if found
-        {
-            std::stringstream ss;
-            std::copy(tmp.begin(), tmp.end(), std::ostream_iterator<string>(ss, ","));
-            unknownScope = ss.str();
-        }
-
-        return tmp.size() == 0;
-    }
-
-    virtual bool isUriInScope(const string &uri, const Scope &scope) const
-    {
-        map<string, Scope>::const_iterator it = _uris.find(uri);
-
-        if (it == _uris.end() || it->second.empty() || scope.empty())
-            return false;
-
-        vector<string> tmp;
-        std::set_intersection(it->second.begin(), it->second.end(), scope.begin(), scope.end(), 
-            std::inserter(tmp, tmp.begin()));
-
-        return tmp.size() > 0;
-    }
-
-    virtual void saveGrant(const Grant &grant)
-    {
-        _grants[NaiveHasher::hash(grant)] = grant;
-    }
-
-    virtual bool isGrantExist(const Grant &grant) const
-    {
-        return _grants.find(NaiveHasher::hash(grant)) != _grants.end() ? true : false;
-    }
-    
-    virtual void saveTokenBundle(const Grant &grant, const TokenBundle &token)
-    {
-    }
-
-
-    //non-interface helpers part
-    //--------------------------
-
-    void createClient(Client *client)
-    {
-        _clients[client->id] = SharedPtr<Client>::Type(client);
-    };
-
-    void initScopes(string scope)
-    {
-        _scopes = Scope(scope);
-    };
-
-    vector<string> getScopes() const
-    {
-        return _scopes;
-    }
-};
 
 
 class HTTPRequestResponseMock : public IHttpRequest, public IHttpResponse
@@ -164,57 +82,6 @@ public:
     virtual void setStatus(HttpStatusType status) {_status = status;};
 };
 
-
-// Save generate and save code in memory storage
-// RFC6749 4.1.3
-class AuthorizationCodeGeneratorMock : public IAuthorizationCodeGenerator
-{
-private:
-    map<string,string> _codes;
-
-public:
-    AuthorizationCodeGeneratorMock()
-    {
-        srand(static_cast<unsigned int>(std::time(NULL))); //sequence is 41, 
-    };
-
-    virtual string generateAuthorizationCode(const Grant &grant, string &requestUri)
-    {
-        std::ostringstream oss;
-        oss << grant.userId << "`" << grant.clientId << "`" << grant.scope.toString() << "`" << requestUri << "`";
-        string code = std::to_string(std::rand());
-        _codes[code] = oss.str();
-        return code;
-    };
-
-    virtual bool checkAndRemoveAuthorizationCode(const string &code, Grant &grant, string &requestUri)
-    {
-        if (_codes.find(code) == _codes.end()) return false;
-
-        std::istringstream iss(_codes[code]);
-
-        vector<string> out;
-
-        std::string val;
-        while (std::getline(iss, val, '`'))
-            out.push_back(val);
-
-        grant.userId = out[0];
-        grant.clientId = out[1];
-        grant.scope = out[2];
-        requestUri = out[3];
-
-        _codes.erase(code);
-
-        return true;
-    };
-
-    virtual void removeExpiredCodes()
-    {
-    }
-
-    virtual ~AuthorizationCodeGeneratorMock(){};
-};
 
 }; //namespace Test
 }; //namespace OAuth2

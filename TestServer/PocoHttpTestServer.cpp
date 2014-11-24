@@ -2,7 +2,7 @@
 
 #include "PocoHttpTestServer.h"
 #include <Poco/URI.h>
-#include "PocoHelpers.h"
+#include "PocoHttpAdapters.h"
 
 //#include "tests/AuthorizationMocks.h"
 //
@@ -33,7 +33,13 @@ public:
         }
         catch (OAuth2::AuthorizationException &ex)
         {
+            rs.setStatus(404);
             Application::instance().logger().information("E: " + string(ex.what()));
+        }
+        catch (...) // HACK its reliable server
+        {
+            rs.setStatus(404);
+            rs.setBody("Error!");
         }
     };
 protected:
@@ -78,6 +84,23 @@ protected:
     }
 };
 
+class ResourceServerEndpointHTTPRequestHandler : public HTTPRequestHandlerWrapper
+{
+protected:
+    virtual void handleRequestImpl(OAuth2::IHttpRequest & rq, OAuth2::IHttpResponse & rs)
+    {
+		Application::instance().logger().information("R: Resource request");
+
+        string tmp = rq.getHeader("Authorization");
+
+        //HACK: BIG & FAT one
+        if (!OAuth2::TokenValidator::canProcessRequest(tmp, rq, rs))
+            return;
+
+        rs.setBody("Access to " + rq.getURI() + " granted with " + tmp);
+    }
+};
+
 HTTPRequestHandler* MyRequestHandlerFactory::createRequestHandler(const HTTPServerRequest& request)
 {
     //const std::string method = request.getMethod();
@@ -97,12 +120,23 @@ HTTPRequestHandler* MyRequestHandlerFactory::createRequestHandler(const HTTPServ
     {
         return new AuthenticationEndpointHTTPRequestHandler;
     }
+    else
+    {
+        return new ResourceServerEndpointHTTPRequestHandler;
+    }
 
-    return 0;
+    //return 0;
 }
 
 void initializeTestServer()
 {
+    try
+    {
     initializeServiceLocator();
-    g_as.swap(OAuth2::SharedPtr<OAuth2::AuthorizationServer>::Type(createAuth2Server()));
+        g_as.swap(OAuth2::SharedPtr<OAuth2::AuthorizationServer>::Type(createAuth2Server()));
+    }
+    catch (OAuth2::AuthorizationException &ex)
+    {
+        Application::instance().logger().information("E: " + string(ex.what()));
+    }
 }

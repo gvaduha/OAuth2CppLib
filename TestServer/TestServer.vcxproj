@@ -89,7 +89,7 @@
     <ClCompile Include="tests\OAuthTestServer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="PocoHelpers.h" />
+    <ClInclude Include="PocoHttpAdapters.h" />
     <ClInclude Include="PocoHttpTestServer.h" />
     <ClInclude Include="tests\AuthCodeFlowTest.h" />
     <ClInclude Include="tests\AuthorizationMocks.h" />

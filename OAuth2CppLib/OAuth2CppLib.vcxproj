@@ -88,6 +88,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\Entities.h" />
+    <ClInclude Include="include\InterfaceImplementations.h" />
     <ClInclude Include="src\Helpers.h" />
     <ClInclude Include="include\AuthorizationCodeGrant.h" />
     <ClInclude Include="include\Constants.h" />
@@ -98,7 +99,9 @@
   <ItemGroup>
     <ClCompile Include="src\AuthorizationCodeGrant.cpp" />
     <ClCompile Include="src\Constants.cpp" />
+    <ClCompile Include="src\Entities.cpp" />
     <ClCompile Include="src\Helpers.cpp" />
+    <ClCompile Include="src\InterfaceImplementations.cpp" />
     <ClCompile Include="src\OAuth2.cpp" />
   </ItemGroup>
   <ItemGroup>

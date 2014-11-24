@@ -101,9 +101,9 @@ Errors::Code CodeRequestProcessor::processRequest(const IHttpRequest &request, I
         return Errors::Code::invalid_request;
     }
 
-    Client *client = sl.Storage->getClient(cid);
+    Client client = sl.Storage->getClient(cid);
 
-    if (!client || client->empty())
+    if (client.empty())
     {
         std::ostringstream oss;
         oss << cid << " client unregistered";
@@ -112,7 +112,7 @@ Errors::Code CodeRequestProcessor::processRequest(const IHttpRequest &request, I
     }
 
     Scope scope;
-    Errors::Code res = checkScope(request, response, client->scope, scope);
+    Errors::Code res = checkScope(request, response, client.scope, scope);
 
     if (Errors::ok != res)
         return res;
@@ -120,15 +120,15 @@ Errors::Code CodeRequestProcessor::processRequest(const IHttpRequest &request, I
     // redirect_uri is OPTIONAL parameter by RFC
     string uri = request.getParam(Params::redirect_uri);
     if (uri.empty())
-        if (client->redirectUri.empty())
+        if (client.redirectUri.empty())
         {
             make_error_response(Errors::Code::invalid_request, "no redirect_uri", request, response);
             return Errors::Code::invalid_request;
         }
         else
-            uri = sl.AuthorizationServerPolicies->getCallbackUri(*client); // if request has no redirect_uri, substitute it from client's
+            uri = sl.AuthorizationServerPolicies->getCallbackUri(client); // if request has no redirect_uri, substitute it from client's
     else
-        if (!sl.AuthorizationServerPolicies->isValidCallbackUri(*client, uri)) // check that request redirect_uri against client's
+        if (!sl.AuthorizationServerPolicies->isValidCallbackUri(client, uri)) // check that request redirect_uri against client's
         {
             make_error_response(Errors::Code::invalid_request, "invalid redirect_uri", request, response);
             return Errors::Code::invalid_request;
@@ -182,24 +182,24 @@ bool TokenRequestProcessor::validateParameters(const IHttpRequest &request, stri
 Errors::Code TokenRequestProcessor::processRequest(const IHttpRequest &request, IHttpResponse &response)
 {
     ServiceLocator::ServiceList sl = ServiceLocator::instance();
-    ClientIdType cid = sl.ClientAuthN->authenticateClient(request);
+    Client c = sl.ClientAuthN->authenticateClient(request);
 
-    if (cid.empty())
+    if (c.empty())
     {
         make_error_response(Errors::Code::unauthorized_client, "client not found", request, response);
         return Errors::Code::unauthorized_client;
     }
 
     // Parameters of the request that auth code is provided with (i.e. client, user, scope, uri)
-    Grant grant;
+    Grant grant(Grant::EmptyGrant);
     string requestUri;
 
     if ( !sl.AuthCodeGen->checkAndRemoveAuthorizationCode(request.getParam(Params::code), grant, requestUri) ||
         request.getParam(Params::redirect_uri) != requestUri || 
         request.getParam(Params::client_id) != grant.clientId )
     {
-        make_error_response(Errors::Code::invalid_request, "code not found", request, response);
-        return Errors::Code::invalid_request;
+        make_error_response(Errors::Code::invalid_grant, "code not found", request, response);
+        return Errors::Code::invalid_grant;
     }
 
     // Generate and save token with link to its grant

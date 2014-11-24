@@ -66,9 +66,12 @@ public:
     };
 
 private:
+    static const std::regex _illegal_sym_regex;
+    static const std::string _illegal_sym_replace;
+
     string remove_illegal_chars(string s) const
     {
-        return std::regex_replace(s, std::regex("[ \\\\\"]+"), "_");
+        return std::regex_replace(s, _illegal_sym_regex, _illegal_sym_replace);
     };
 protected:
     void CleanValuesFromReservedSymbols()
@@ -133,10 +136,16 @@ public:
 };
 
 // Client class
-class Client
+struct Client
 {
-public:
+    enum Type
+    {
+        confedential = 1,
+        publik
+    };
+
     ClientIdType id;
+    Type type;
     string secret;
     string redirectUri;
     Scope scope;
@@ -144,6 +153,12 @@ public:
     Client()
         : id(EmptyClientId)
     {}
+
+    Client(ClientIdType id, Type type, string secret, string redirectUri, Scope scope)
+        : id(id), type(type), secret(secret), redirectUri(redirectUri), scope(scope)
+    {}
+
+    static Client EmptyClient;
 
     bool empty()
     {
@@ -153,28 +168,49 @@ public:
     string toString() const
     {
         std::stringstream  ss;
-        ss << id << ":" << secret << ":" << redirectUri << ":" << scope.toString();
+        ss << id << ":" << type << ":" << secret << ":" << redirectUri << ":" << scope.toString();
         return ss.str();
     }
 
-protected:
-    Client(const Client &rhs);
-    Client & operator=(const Client &rhs);
+    Client & operator=(const Client &rhs)
+    {
+        swap(Client(rhs));
+        return *this;
+    }
+
+    void swap(Client &rhs)
+    {
+        using std::swap;
+        
+        id.swap(rhs.id);
+        secret.swap(rhs.secret);
+        redirectUri.swap(rhs.redirectUri);
+        scope.swap(rhs.scope);
+        swap(type, rhs.type);
+    }
 };
 //static const Client EmptyClientId;
 
-
-// Defines "Grant" given by user to client to access scope
 struct Grant
 {
     UserIdType userId;
     ClientIdType clientId;
     Scope scope;
+    time_t expire; //TODO: extension for future use
 
-    Grant(const UserIdType &userId, const ClientIdType &clientId, const Scope &scope)
-        : userId(userId), clientId(clientId), scope(scope) {};
+    Grant(const UserIdType &userId, const ClientIdType &clientId, const Scope &scope, const time_t expire = 0)
+        : userId(userId), clientId(clientId), scope(scope), expire(expire) {};
     Grant()
-        : userId(""), clientId(""), scope("") {};
+        : userId(""), clientId(""), scope(""), expire(0) {};
+
+    static Grant EmptyGrant;
+
+    bool empty()
+    {
+        return EmptyGrant == *this;
+        //return userId.empty() || clientId.empty() || scope.empty(); //TODO: it's controversal decesion, object consistent if all values are non-empty!
+    }
+
 
     Grant & operator=(const Grant rhs)
     {
@@ -183,6 +219,13 @@ struct Grant
     }
 
     bool operator==(const Grant &rhs) const
+    {
+        return userId == rhs.userId && clientId == rhs.clientId
+            && rhs.scope == scope;
+    }
+
+    // When scope of grant passed as parameter is subscope of the grant, we could legaly use such grant to access resources
+    bool isSubGrant(const Grant &rhs) const
     {
         return userId == rhs.userId && clientId == rhs.clientId
             && rhs.scope.isSubscopeOf(scope);
@@ -205,9 +248,22 @@ struct Grant
     }
 };
 
+//struct Token
+//{
+//    string value;
+//    time_t expire;
+//};
+
 // Tokens and supply information as defined by https://tools.ietf.org/html/rfc6749#section-5
 struct TokenBundle
 {
+//private:
+//    Token _accessToken;
+//    Token _refreshToken;
+//public:
+//    string accessToken()
+//    {
+//    }
     string accessToken;
     string tokenType;
     string expiresIn;

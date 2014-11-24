@@ -6,10 +6,8 @@
 
 namespace OAuth2
 {
-///****************** UNCHARTED
+// Utility function to make error responses
 void make_error_response(const Errors::Code error, const string &msg, const IHttpRequest &request, IHttpResponse &response);
-///****************** UNCHARTED
-
 
 // Implements following rules:
 // - Uri, case sensivtive must be one of the client Uri
@@ -29,7 +27,7 @@ public:
 // OAuth2 Endpoint implementation
 // Process request through queue of RequestProcessingUnit 
 // selecting first appropriate (RequestProcessingUnit.filter match)
-class ServerEndpoint
+class ServerEndpoint //final
 {
 public:
     typedef std::list<SharedPtr<IRequestProcessor>::Type> RequestProcessorsQueueType;
@@ -107,7 +105,8 @@ private:
 
 // Catch requests from two RFC defined endpoints (Authorization and Token)
 // and delegate requests to ServerEnpoint class for processing
-class AuthorizationServer
+// There is no need to extend this class (IODC extends via new grant types not endpoints)
+class AuthorizationServer //final
 {
 private:
     SharedPtr<ServerEndpoint>::Type _authorizationEndpoint;
@@ -132,6 +131,28 @@ public:
 private:
     AuthorizationServer(const AuthorizationServer &);
     AuthorizationServer & operator=(const AuthorizationServer &);
+};
+
+// Recieve token in RFC format (Type RWS Token) and 
+class TokenValidator //final
+{
+public:
+
+    static bool canProcessRequest(const string &token, const IHttpRequest &request, IHttpResponse &response)
+    {
+        std::vector<string> parts;
+        std::istringstream iss(token);
+        copy(std::istream_iterator<string>(iss), std::istream_iterator<string>(), std::back_inserter(parts));
+
+        //HACK: not only grants but scope! uri!
+        if (ServiceLocator::instance().Storage->getGrant(parts[1]).empty())
+        {
+            make_error_response(OAuth2::Errors::invalid_grant, "invalid token", request, response);
+            return false;
+        }
+
+        return true;
+    }
 };
 
 }; //namespace OAuth2
