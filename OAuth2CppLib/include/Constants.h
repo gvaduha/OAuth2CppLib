@@ -10,6 +10,16 @@ namespace OAuth2
     extern const userid_t EmptyUserId;
     extern const clientid_t EmptyClientId;
 
+namespace AuthorizationEndpointResponseType
+{
+    OAUTH_STRING_CONST(code);
+};
+
+namespace TokenEndpointGrantType
+{
+    OAUTH_STRING_CONST(authorization_code);
+};
+
 namespace Params
 {
     typedef string Type;

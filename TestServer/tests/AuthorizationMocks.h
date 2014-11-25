@@ -5,7 +5,7 @@
 #include <map>
 //#include <set>
 
-#include <OAuth2.h>
+#include <OAuth2AuthServer.h>
 
 #include <Poco/RegularExpression.h>
 #include <Poco/String.h>

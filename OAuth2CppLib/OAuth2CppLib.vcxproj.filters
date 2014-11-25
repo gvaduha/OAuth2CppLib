@@ -3,20 +3,22 @@
   <ItemGroup>
     <ClCompile Include="src\AuthorizationCodeGrant.cpp" />
     <ClCompile Include="src\Helpers.cpp" />
-    <ClCompile Include="src\OAuth2.cpp" />
     <ClCompile Include="src\Constants.cpp" />
     <ClCompile Include="src\InterfaceImplementations.cpp" />
     <ClCompile Include="src\Entities.cpp" />
+    <ClCompile Include="src\OAuth2AuthServer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Helpers.h" />
     <ClInclude Include="include\AuthorizationCodeGrant.h" />
     <ClInclude Include="include\Constants.h" />
     <ClInclude Include="include\Interfaces.h" />
-    <ClInclude Include="include\OAuth2.h" />
     <ClInclude Include="include\Types.h" />
     <ClInclude Include="include\Entities.h" />
     <ClInclude Include="include\InterfaceImplementations.h" />
+    <ClInclude Include="include\SimpleMemoryStorage.hpp" />
+    <ClInclude Include="include\OAuth2AuthServer.h" />
+    <ClInclude Include="include\OAuth2ResourceServer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagram.cd" />

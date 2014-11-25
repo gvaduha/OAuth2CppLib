@@ -11,7 +11,7 @@
 #include <Poco/Util/Application.h>
 #include <Poco/Util/ServerApplication.h>
 
-#include <OAuth2.h>
+#include <OAuth2AuthServer.h>
 
 using namespace Poco;
 using namespace Poco::Util;

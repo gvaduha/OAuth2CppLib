@@ -4,11 +4,9 @@
 #include <Poco/URI.h>
 #include "PocoHttpAdapters.h"
 
-//#include "tests/AuthorizationMocks.h"
-//
-//#include <Types.h>
-#include <OAuth2.h>
-//#include <AuthorizationCodeGrant.h>
+#include <OAuth2AuthServer.h>
+#include <OAuth2ResourceServer.h>
+
 
 static OAuth2::AuthorizationServer* g_as;
 
@@ -93,7 +91,6 @@ protected:
 
         string tmp = rq.getHeader("Authorization");
 
-        //HACK: BIG & FAT one
         if (!OAuth2::TokenValidator::canProcessRequest(tmp, rq, rs))
             return;
 

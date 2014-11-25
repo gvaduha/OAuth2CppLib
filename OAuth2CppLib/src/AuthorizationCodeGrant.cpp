@@ -11,6 +11,11 @@ namespace AuthorizationCodeGrant
 
     using namespace Helpers;
 
+bool CodeRequestProcessor::canProcessRequest(const IHttpRequest &request) const
+{
+    return request.getParam(Params::response_type) == AuthorizationEndpointResponseType::code;
+};
+
 bool CodeRequestProcessor::validateParameters(const IHttpRequest &request, string &error) const
 {
     if (!request.isParamExist(Params::response_type) || !request.isParamExist(Params::client_id))
@@ -81,6 +86,7 @@ Errors::Code CodeRequestProcessor::checkScope(const IHttpRequest &request, IHttp
     return Errors::ok;
 }
 
+// Main request handler for RFC6749 Authcode Grant code request
 Errors::Code CodeRequestProcessor::processRequest(const IHttpRequest &request, IHttpResponse &response) const
 {
     const ServiceLocator::ServiceList *sl = ServiceLocator::instance();
@@ -108,6 +114,12 @@ Errors::Code CodeRequestProcessor::processRequest(const IHttpRequest &request, I
         std::ostringstream oss;
         oss << cid << " client unregistered";
         make_error_response(Errors::Code::unauthorized_client, oss.str(), request, response);
+        return Errors::Code::unauthorized_client;
+    }
+
+    if (client.type != Client::Type::confedential)
+    {
+        make_error_response(Errors::Code::unauthorized_client, "client type should be confedential", request, response);
         return Errors::Code::unauthorized_client;
     }
 
@@ -175,6 +187,11 @@ std::map<string,string> CodeRequestProcessor::materializeTokenBundle(const Grant
 //
 /////////////// TokenRequestProcessor Begin Implementation /////////////////
 //
+bool TokenRequestProcessor::canProcessRequest(const IHttpRequest & request) const
+{
+    return request.getParam(Params::grant_type) == TokenEndpointGrantType::authorization_code;
+};
+
 bool TokenRequestProcessor::validateParameters(const IHttpRequest &request, string &error) const
 {
     if (!request.isParamExist(Params::grant_type) || !request.isParamExist(Params::client_id) || !request.isParamExist(Params::code))

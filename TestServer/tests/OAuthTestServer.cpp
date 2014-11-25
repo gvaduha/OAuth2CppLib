@@ -1,10 +1,22 @@
 #include <Types.h>
-#include <OAuth2.h>
+#include <OAuth2AuthServer.h>
 #include <AuthorizationCodeGrant.h>
 #include <InterfaceImplementations.h>
+#include <SimpleMemoryStorage.hpp>
 
 #include "Mocks.h"
 #include "AuthorizationMocks.h"
+
+class NaiveHasher
+{
+public:
+    template <typename T>
+    static OAuth2::string hash(const T &obj)
+    {
+        return obj.toString();
+    };
+};
+
 
 OAuth2::AuthorizationServer * createAuth2Server()
 {
@@ -47,7 +59,7 @@ void initializeServiceLocator()
     IAuthorizationCodeGenerator *authcodegen = new SimpleAuthorizationCodeGenerator();
     IClientAuthenticationFacade *cauthn = new RequestParameterClientAuthenticationFacade();
     
-    SimpleMemoryStorage *pMemStorage = new SimpleMemoryStorage();
+    SimpleMemoryStorage<NaiveHasher> *pMemStorage = new SimpleMemoryStorage<NaiveHasher>();
 
     pMemStorage->initScopes("email profile xxx basic private c++ c\"\\  ");
 

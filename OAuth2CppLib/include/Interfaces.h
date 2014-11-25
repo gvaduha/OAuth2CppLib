@@ -10,32 +10,6 @@
 
 namespace OAuth2
 {
-// Layer exception
-// Using what() to pass OAuth2::Errors to create error request
-class AuthorizationException : public std::logic_error
-{
-private:
-    string _error_info;
-public:
-    AuthorizationException(string const &message)
-        : std::logic_error(message)
-    {};
-    AuthorizationException(string const &message, string const &info)
-        : std::logic_error(message), _error_info(info)
-    {};
-    AuthorizationException(AuthorizationException const &rhs)
-        : std::logic_error(rhs), _error_info(rhs._error_info)
-    {};
-    AuthorizationException& operator=(AuthorizationException const &rhs)
-    {
-        exception::operator=(rhs);
-        _error_info = rhs._error_info;
-        return *this;
-    }
-    virtual ~AuthorizationException()
-    {};
-};
-
 
 // Interface to HTTP request object to provide functions needed by subsystem
 class IHttpRequest
@@ -233,91 +207,6 @@ public:
     // Check that given URI belongs to one of the scope in scope vector
     virtual bool isUriInScope(const string &uri, const Scope &scope) const = 0;
     virtual ~IAuthorizationServerStorage(){};
-};
-
-// Holder of all services required to process messages
-class ServiceLocator
-{
-public:
-    struct ServiceList
-    {
-        IUserAuthenticationFacade *UserAuthN;
-        IClientAuthorizationFacade *ClientAuthZ;
-        IClientAuthenticationFacade *ClientAuthN;
-        IAuthorizationCodeGenerator *AuthCodeGen;
-        IAuthorizationServerStorage *Storage;
-        IAuthorizationServerPolicies *AuthorizationServerPolicies;
-
-        ServiceList(IUserAuthenticationFacade *uauthn, IClientAuthorizationFacade *cauthz, IClientAuthenticationFacade *cauthn,
-            IAuthorizationCodeGenerator *authcodegen, IAuthorizationServerStorage *storage, IAuthorizationServerPolicies *policies)
-            : UserAuthN(uauthn), ClientAuthZ(cauthz), ClientAuthN(cauthn), AuthCodeGen(authcodegen),
-            Storage(storage), AuthorizationServerPolicies(policies)
-        {}
-
-        friend class ServiceLocator;
-
-        ~ServiceList()
-        {
-            delete UserAuthN;
-            delete ClientAuthZ;
-            delete ClientAuthN;
-            delete AuthCodeGen;
-            delete Storage;
-            delete AuthorizationServerPolicies;
-        };
-
-    private:
-        //FRAGILE CODE: Should be revised every time ServiceList changed!
-        bool hasNullPtrs()
-        {
-            if (!this->AuthCodeGen ||  !this->AuthorizationServerPolicies || !this->ClientAuthN
-                || !this->ClientAuthZ || !this->Storage || !this->UserAuthN
-                )
-                return true;
-            else
-                return false;
-        };
-    };
-
-private:
-    static ServiceList *_impl;
-
-public:
-    static const ServiceList * instance()
-    {
-        if (!_impl)
-            throw AuthorizationException("Service locator for AS not initialized. Call init first.");
-
-        return _impl;
-    };
-
-    //  Init must be called before any access to Instance
-    static void init(ServiceList *services)
-    {
-        if (services->hasNullPtrs())
-        {
-            delete services;
-            throw AuthorizationException("Can't initialize ServiceLocator with null values");
-        }
-        else
-        {
-            std::swap(_impl, services);
-
-            if (services)
-                delete services;
-        }
-    };
-
-    ~ServiceLocator()
-    {
-        if (_impl)
-            delete _impl;
-    };
-
-private:
-    ServiceLocator();
-    ServiceLocator & operator=(const ServiceLocator &);
-    ServiceLocator(const ServiceLocator &);
 };
 
 }; //namespace OAuth2

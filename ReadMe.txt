@@ -3,19 +3,17 @@
 ========================================================================
 
 //TODO:
-- Remove logic from storage
+- make_response analog to make_error_response (could be good extension point to support JSON, 302 Redirect replies or custom peculiar types)
 - Make interface for storage politics
-- Make profile as normal resource
 - URI as class
-
-- Template function in TokenFactory call T Token.Create
-- TokenFactory::Create by type
-
-- Make language resource loader Interface
 - Make request.context.getUserID() (it will eliminate dependence on UserAuthN)
-- Remove darn SharedPtrs
 - Review URI parsing against RFC3986 #3
+- Remove logic from storage (if any)
+- Make language resource loader Interface
 
+//HACK:
+- RS not check token type in TokenValidator
+- RS only check grant in TokenValidator
 
 
 class RFC_values_for_grant_types

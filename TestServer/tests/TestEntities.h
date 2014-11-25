@@ -1,7 +1,7 @@
 #pragma once
 #include "TestUtilities.h"
 #include "Mocks.h"
-#include <OAuth2.h>
+#include <OAuth2AuthServer.h>
 
 namespace OAuth2
 {
