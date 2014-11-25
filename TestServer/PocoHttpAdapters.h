@@ -8,7 +8,7 @@
 #include <Poco/Net/HTTPServerResponse.h>
 #include <Poco/Net/HTMLForm.h>
 
-#include "tests/Mocks.h"
+#include <cassert>
 
 using OAuth2::string;
 using namespace Poco;

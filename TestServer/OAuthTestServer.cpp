@@ -5,7 +5,6 @@
 #include <SimpleMemoryStorage.hpp>
 
 #include "Mocks.h"
-#include "AuthorizationMocks.h"
 
 class NaiveHasher
 {
