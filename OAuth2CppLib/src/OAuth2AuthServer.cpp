@@ -191,6 +191,11 @@ bool StandardAuthorizationServerPolicies::isValidCallbackUri(const Client &clien
     return false;
 };
 
+unsigned int StandardAuthorizationServerPolicies::generateNewRefreshTokenAfter() const
+{
+    return _generateNewRefreshTokenAfter;
+}
+
 string StandardAuthorizationServerPolicies::getCallbackUri(const Client &client) const
 {
     vector <string> tokens;

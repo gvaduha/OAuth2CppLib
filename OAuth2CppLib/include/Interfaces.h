@@ -133,6 +133,9 @@ public:
     virtual bool isValidCallbackUri(const Client &client, const string &scope) const = 0;
     // Retrieves callback Uri in case the client would like to implement more than one Uri strategy
     virtual string getCallbackUri(const Client &client) const = 0;
+    // Shows after how many requests for access token refresh, refresh token itself
+    // should be regenerated. 0 means never.
+    virtual unsigned int generateNewRefreshTokenAfter() const = 0;
 
     virtual ~IAuthorizationServerPolicies(){};
 };
@@ -176,7 +179,7 @@ public:
 class IAccessTokenGenerator
 {
 public:
-    virtual Token generate(const Grant &grant, const string &type) const = 0;
+    virtual Token generate(const Grant &grant) const = 0;
     virtual ~IAccessTokenGenerator(){};
 };
 

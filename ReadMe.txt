@@ -5,7 +5,7 @@
 //TODO:
 - make_response analog to make_error_response (could be good extension point to support JSON, 302 Redirect replies or custom peculiar types)
 - Make request.CONTEXT.getUserID() (it will eliminate dependence on UserAuthN)
-- Make interface for storage politics
+- Make interface for storage policies
 - URI as class
 - Review URI parsing against RFC3986 #3
 - Remove logic from storage (if any)

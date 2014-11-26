@@ -66,7 +66,7 @@ Errors::Code CodeRequestProcessor::checkScope(const IHttpRequest &request, IHttp
         return Errors::Code::invalid_scope;
     }
     
-    // 3: check against server politics if both scopes are present
+    // 3: check against server policies if both scopes are present
     if (!scope.empty() && !clientScope.empty() &&
         !sl->AuthorizationServerPolicies->isScopeValid(clientScope, scope)) // check request scope against client's
     {
@@ -117,6 +117,7 @@ Errors::Code CodeRequestProcessor::processRequest(const IHttpRequest &request, I
         return Errors::Code::unauthorized_client;
     }
 
+    //HACK: it seems to be ServerPolicy
     if (client.type != Client::Type::confedential)
     {
         make_error_response(Errors::Code::unauthorized_client, "client type should be confedential", request, response);
@@ -206,6 +207,10 @@ bool TokenRequestProcessor::validateParameters(const IHttpRequest &request, stri
 Errors::Code TokenRequestProcessor::processRequest(const IHttpRequest &request, IHttpResponse &response) const
 {
     const ServiceLocator::ServiceList *sl = ServiceLocator::instance();
+
+    //HACK: If the client type is confidential or the client was issued client
+    // credentials (or assigned other authentication requirements), the
+    // client MUST authenticate with the authorization server
     Client c = sl->ClientAuthN->authenticateClient(request);
 
     if (c.empty())
@@ -252,7 +257,7 @@ std::map<string,string> TokenRequestProcessor::materializeTokenBundle(const Gran
     const ServiceLocator::ServiceList *sl = ServiceLocator::instance();
 
     // Create and save access token
-    Token aT = sl->AccessTokenGenerator->generate(grant, "Bearer");
+    Token aT = sl->AccessTokenGenerator->generate(grant);
     sl->Storage->saveToken(grant, aT);
 
     // Create and save refresh token
@@ -260,6 +265,7 @@ std::map<string,string> TokenRequestProcessor::materializeTokenBundle(const Gran
     string rT = sl->RefreshTokenGenerator->generate(c);
     sl->Storage->saveRefreshToken(grant.clientId, rT);
 
+    // Create and return key-value map for response
     std::map<string,string> map;
     typedef std::pair<string, string> strpair_t;
 
@@ -273,7 +279,6 @@ std::map<string,string> TokenRequestProcessor::materializeTokenBundle(const Gran
 
     return map;
 }
-
 
 }; //namespace AuthorizationCodeGrant
 }; //namespace OAuth2

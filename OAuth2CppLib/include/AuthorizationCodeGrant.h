@@ -49,7 +49,6 @@ namespace OAuth2
 //    refresh_token OPTIONAL
 //    custom_parameters... - not supported now
 //    
-//   OAUTH_NAMED_STRING_CONST(kAuthzResponseType,Params::code);
 namespace AuthorizationCodeGrant
 {
 

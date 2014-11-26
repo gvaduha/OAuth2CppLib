@@ -53,7 +53,7 @@ void initializeServiceLocator()
     "</form></body></html>";
 
 
-    IAuthorizationServerPolicies *policies = new StandardAuthorizationServerPolicies();
+    IAuthorizationServerPolicies *policies = new StandardAuthorizationServerPolicies(2);
     IUserAuthenticationFacade *uauthn = new UserAuthenticationFacadeMock("User123",true);
     IClientAuthorizationFacade *cauthz = new DefaultClientAuthorizationFacade(authzPageBody);
     IAuthorizationCodeManager *AuthCodeManager = new SimpleAuthorizationCodeManager();

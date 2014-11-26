@@ -34,10 +34,16 @@ public:
 // to implement the case insensitive you could ether transform request by filters or substitute ServerPolicy
 class StandardAuthorizationServerPolicies : public IAuthorizationServerPolicies
 {
+    unsigned int _generateNewRefreshTokenAfter;
 public:
+    StandardAuthorizationServerPolicies(unsigned int generateNewRefreshTokenAfter)
+        : _generateNewRefreshTokenAfter(generateNewRefreshTokenAfter)
+    {};
+
     virtual bool isScopeValid(const Scope &clientScope, const Scope &requestScope) const;
     virtual bool isValidCallbackUri(const Client &client, const string &uri) const;
     virtual string getCallbackUri(const Client &client) const;
+    virtual unsigned int generateNewRefreshTokenAfter() const;
 };
 
 // OAuth2 Endpoint implementation

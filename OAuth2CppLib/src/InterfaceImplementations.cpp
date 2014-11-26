@@ -156,9 +156,9 @@ string generateOpaqueString(unsigned int length)
     return oss.str();
 }
 
-Token OpaqueStringAccessTokenGenerator::generate(const Grant &grant, const string &type) const
+Token OpaqueStringAccessTokenGenerator::generate(const Grant &grant) const
 {
-    return Token(generateOpaqueString(_tokenLength), type, _tokenExpire);
+    return Token(generateOpaqueString(_tokenLength), "Bearer", _tokenExpire);
 }
 
 //HACK: Hardcode

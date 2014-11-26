@@ -66,7 +66,7 @@ public:
     OpaqueStringAccessTokenGenerator(time_t tokenExpire, unsigned int tokenLength = 42)
         : _tokenExpire(tokenExpire), _tokenLength(tokenLength)
     {};
-    virtual Token generate(const Grant &grant, const string &type) const;
+    virtual Token generate(const Grant &grant) const;
     virtual ~OpaqueStringAccessTokenGenerator(){};
 };
 

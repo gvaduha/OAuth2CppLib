@@ -90,6 +90,7 @@
     <ClInclude Include="include\Entities.h" />
     <ClInclude Include="include\InterfaceImplementations.h" />
     <ClInclude Include="include\OAuth2ResourceServer.h" />
+    <ClInclude Include="include\RefreshTokenProcessor.h" />
     <ClInclude Include="include\SimpleMemoryStorage.hpp" />
     <ClInclude Include="src\Helpers.h" />
     <ClInclude Include="include\AuthorizationCodeGrant.h" />
@@ -105,6 +106,7 @@
     <ClCompile Include="src\Helpers.cpp" />
     <ClCompile Include="src\InterfaceImplementations.cpp" />
     <ClCompile Include="src\OAuth2AuthServer.cpp" />
+    <ClCompile Include="src\RefreshTokenProcessor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagram.cd" />
