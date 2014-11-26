@@ -119,6 +119,11 @@ public:
     {
         return _scopes;
     }
+
+    void addUri(string uri, Scope scope)
+    {
+        _uris[uri] = scope;
+    }
 };
 
 };

@@ -102,20 +102,27 @@ private:
 };
 
 // Holder of all services required to process messages
+//TODO: in future as number of services grows its better to redesign to more
+// flexible Registry.get(type_of_service) pattern to enchance supportability
 class ServiceLocator
 {
 public:
+    // All classes of pointers in ServiceList MUST BE thread safe or better stateless
     struct ServiceList
     {
         IUserAuthenticationFacade *UserAuthN;
         IClientAuthorizationFacade *ClientAuthZ;
         IClientAuthenticationFacade *ClientAuthN;
-        IAuthorizationCodeGenerator *AuthCodeGen;
+        IAuthorizationCodeManager *AuthCodeManager;
+        IAccessTokenGenerator *AccessTokenGenerator;
+        IRefreshTokenGenerator * RefreshTokenGenerator;
         IAuthorizationServerStorage *Storage;
         IAuthorizationServerPolicies *AuthorizationServerPolicies;
+        IUriHelperFactory *UriHelperFactory;
 
-        ServiceList(IUserAuthenticationFacade *uauthn, IClientAuthorizationFacade *cauthz, IClientAuthenticationFacade *cauthn,
-            IAuthorizationCodeGenerator *authcodegen, IAuthorizationServerStorage *storage, IAuthorizationServerPolicies *policies);
+        ServiceList(IUserAuthenticationFacade *uauthn, IClientAuthorizationFacade *cauthz, IClientAuthenticationFacade *cauthn
+            , IAuthorizationCodeManager *AuthCodeManager, IAccessTokenGenerator *AccessTokenGenerator, IRefreshTokenGenerator * RefreshTokenGenerator
+            , IAuthorizationServerStorage *storage, IAuthorizationServerPolicies *policies, IUriHelperFactory *urihelperfac);
 
         friend class ServiceLocator;
 

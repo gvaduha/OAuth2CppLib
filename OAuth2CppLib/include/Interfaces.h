@@ -11,6 +11,31 @@
 namespace OAuth2
 {
 
+// Interface to URI parser
+struct IUri
+{
+    virtual string str() const = 0;
+
+    virtual string getScheme() const = 0;
+    virtual string getUserInfo() const = 0;
+    virtual string getHost() const = 0;
+    virtual int getPort() const = 0;
+    virtual string getPath() const = 0;
+    virtual string getQuery() const = 0;
+    virtual string getFragment() const = 0;
+
+    virtual bool isEqualToPath(IUri &rhs) const = 0;
+
+    virtual ~IUri(){};
+};
+
+struct IUriHelperFactory
+{
+    virtual IUri * create(string uri) = 0;
+    virtual IUri * create(const string &scheme, const string &userInfo, const string &authority,
+        const string &path, const string &query, const string &fragment) = 0;
+};
+
 // Interface to HTTP request object to provide functions needed by subsystem
 class IHttpRequest
 {
@@ -25,7 +50,7 @@ public:
     virtual bool isParamExist(const string &name) const = 0;
     virtual std::map<string,string> getParams() const = 0;
     virtual string getParam(const string &name) const = 0;
-    virtual string getURI() const = 0;
+    virtual string getRequestTarget() const = 0;
     virtual string getBody() const = 0;
     virtual ~IHttpRequest(){};
 };
@@ -147,30 +172,46 @@ public:
     virtual ~IResponseFilter(){};
 };
 
+// Generate tokens for given grant and type
+class IAccessTokenGenerator
+{
+public:
+    virtual Token generate(const Grant &grant, const string &type) const = 0;
+    virtual ~IAccessTokenGenerator(){};
+};
+
+// Generate refresh tokens.
+// Full client object passed to external code to decide what to generate.
+class IRefreshTokenGenerator
+{
+public:
+    virtual string generate(const Client &client) const = 0;
+    virtual ~IRefreshTokenGenerator(){};
+};
 
 // Generate codes for Authorization Code Grant Flow
 // RFC states that for token request redirect_uri is required if specified in code request
 // and client_id is required if client is NOT authenticating with Authorization Server (RFC6749 4.1.3)
-class IAuthorizationCodeGenerator
+class IAuthorizationCodeManager
 {
 public:
     virtual string generateAuthorizationCode(const Grant &params, string &requestUri) = 0;
     virtual bool checkAndRemoveAuthorizationCode(const string &code, Grant &params, string &requestUri) = 0;
     virtual void removeExpiredCodes() = 0;
-    virtual ~IAuthorizationCodeGenerator(){};
+    virtual ~IAuthorizationCodeManager(){};
 };
 
 //TODO: !!!!????
 //HACK: Decorators implementation commented-out
 //template <typename TExt, typename TInt>
-//class AuthorizationCodeGeneratorDecorator : IAuthorizationCodeGenerator
+//class AuthorizationCodeManagerDecorator : IAuthorizationCodeManager
 //{
 //private:
 //    typename TExt *_exto;
 //    typename TInt *_into;
 //
 //public:
-//    AuthorizationCodeGeneratorDecorator(TExt *exto, TInt *into)
+//    AuthorizationCodeManagerDecorator(TExt *exto, TInt *into)
 //        : _exto(exto), _into(into)
 //    {}
 //
@@ -181,7 +222,7 @@ public:
 //
 //    virtual bool checkAndRemoveAuthorizationCode(const string &code, Grant &params) = 0;
 //    virtual void removeExpiredCodes() = 0;
-//    virtual ~AuthorizationCodeGeneratorDecorator()
+//    virtual ~AuthorizationCodeManagerDecorator()
 //    {
 //        delete _exto;
 //        delete _exto;

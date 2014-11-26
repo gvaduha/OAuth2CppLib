@@ -34,13 +34,13 @@
       <FileName>include\Interfaces.h</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="OAuth2::IAuthorizationCodeGenerator">
+  <Class Name="OAuth2::IAuthorizationCodeManager">
     <Position X="7.5" Y="0.5" Width="2.25" />
     <Members>
-      <Method Name="~IAuthorizationCodeGenerator" Hidden="true" />
+      <Method Name="~IAuthorizationCodeManager" Hidden="true" />
     </Members>
     <NestedTypes>
-      <Struct Name="OAuth2::IAuthorizationCodeGenerator::Grant" Collapsed="true">
+      <Struct Name="OAuth2::IAuthorizationCodeManager::Grant" Collapsed="true">
         <TypeIdentifier>
           <NewMemberFileName>include\Interfaces.h</NewMemberFileName>
         </TypeIdentifier>
@@ -51,7 +51,7 @@
       <FileName>include\Interfaces.h</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="OAuth2::AuthorizationCodeGeneratorDecorator&lt;TExt, TInt&gt;" Collapsed="true">
+  <Class Name="OAuth2::AuthorizationCodeManagerDecorator&lt;TExt, TInt&gt;" Collapsed="true">
     <Position X="7.5" Y="2.5" Width="2.75" />
     <TypeIdentifier>
       <HashCode>EBAAAAAAAAAEBAAAAAAAAAAAAACAAAAAAAAAAAgBAAA=</HashCode>

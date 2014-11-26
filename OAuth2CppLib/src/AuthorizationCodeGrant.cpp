@@ -71,7 +71,7 @@ Errors::Code CodeRequestProcessor::checkScope(const IHttpRequest &request, IHttp
         !sl->AuthorizationServerPolicies->isScopeValid(clientScope, scope)) // check request scope against client's
     {
         std::ostringstream oss;
-        oss << "scope in request [" << scope.toString() << "] is wider than defined by accepted for client [" << clientScope.toString() << "]";
+        oss << "scope in request [" << scope.str() << "] is wider than defined by accepted for client [" << clientScope.str() << "]";
         make_error_response(Errors::Code::invalid_scope, oss.str(), request, response);
         return Errors::Code::invalid_scope;
     }
@@ -158,7 +158,7 @@ Errors::Code CodeRequestProcessor::processRequest(const IHttpRequest &request, I
 
     // generate code and make response
     // it's important that redirect_uri is as in request for token request (see RFC6749 4.1.3 request requirements)
-    authcode_t code = sl->AuthCodeGen->generateAuthorizationCode(grant, request.getParam(Params::redirect_uri));
+    authcode_t code = sl->AuthCodeManager->generateAuthorizationCode(grant, request.getParam(Params::redirect_uri));
 
     // we should use original uri from response, because when exchanging code to token
     // redirect_uri is REQUIRED if included in auth code request RFC6749 4.1.3
@@ -218,7 +218,7 @@ Errors::Code TokenRequestProcessor::processRequest(const IHttpRequest &request, 
     Grant grant(Grant::EmptyGrant);
     string requestUri;
 
-    if ( !sl->AuthCodeGen->checkAndRemoveAuthorizationCode(request.getParam(Params::code), grant, requestUri) ||
+    if ( !sl->AuthCodeManager->checkAndRemoveAuthorizationCode(request.getParam(Params::code), grant, requestUri) ||
         request.getParam(Params::redirect_uri) != requestUri || 
         request.getParam(Params::client_id) != grant.clientId )
     {
@@ -252,11 +252,12 @@ std::map<string,string> TokenRequestProcessor::materializeTokenBundle(const Gran
     const ServiceLocator::ServiceList *sl = ServiceLocator::instance();
 
     // Create and save access token
-    Token aT("x58FE54AD045B9x", "Bearer", time_t(3600));
+    Token aT = sl->AccessTokenGenerator->generate(grant, "Bearer");
     sl->Storage->saveToken(grant, aT);
 
     // Create and save refresh token
-    string rT = "xRFRSHx";
+    Client c = sl->Storage->getClient(grant.clientId);
+    string rT = sl->RefreshTokenGenerator->generate(c);
     sl->Storage->saveRefreshToken(grant.clientId, rT);
 
     std::map<string,string> map;

@@ -14,6 +14,48 @@ using OAuth2::string;
 using namespace Poco;
 using namespace Poco::Net;
 
+class PocoUriAdapter : public OAuth2::IUri
+{
+    URI _uri;
+
+public:
+    PocoUriAdapter(string uri)
+        : _uri(uri)
+    {}
+
+    PocoUriAdapter(const string &scheme, const string &userInfo, const string &authority,
+        const string &path, const string &query, const string &fragment)
+        :
+    _uri(scheme, authority, path, query, fragment)
+    {}
+
+    virtual string str() const { return _uri.toString(); }
+
+    virtual string getScheme() const { return _uri.getScheme(); }
+    virtual string getUserInfo() const { return _uri.getUserInfo(); }
+    virtual string getHost() const { return _uri.getHost(); }
+    virtual int getPort() const { return _uri.getPort(); }
+    virtual string getPath() const { return _uri.getPath(); }
+    virtual string getQuery() const { return _uri.getQuery(); }
+    virtual string getFragment() const { return _uri.getFragment(); }
+
+    virtual bool isEqualToPath(IUri &rhs) const { return true; } //HACK: hardcoded return true
+};
+
+class PocoUriAdapterFactory : public OAuth2::IUriHelperFactory
+{
+    virtual OAuth2::IUri * create(string uri)
+    {
+        return new PocoUriAdapter(uri);
+    }
+
+    virtual OAuth2::IUri * create(const string &scheme, const string &userInfo, const string &authority,
+        const string &path, const string &query, const string &fragment)
+    {
+        return new PocoUriAdapter(scheme, userInfo, authority, path, query, fragment);
+    };
+};
+
 class PocoHttpRequestAdapter : public OAuth2::IHttpRequest
 {
     HTTPServerRequest *_req;
@@ -54,7 +96,9 @@ public:
             return "";//HACK: Empty string is legal value! Should be implemented as bool getParam(name, &value)!!!
         }
     }
-    virtual string getURI() const { return _req->getURI(); }
+
+    virtual string getRequestTarget() const { return _req->getURI(); }
+
     virtual string getBody() const
     {
         std::ostringstream sout;

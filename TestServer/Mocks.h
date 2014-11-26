@@ -44,7 +44,7 @@ public:
         string msg = UserAuthenticationFacadeMock::_authnPageBody;
 
         Poco::RegularExpression("<<OriginalRequestFieldName>>").subst(msg, UserAuthenticationFacadeMock::_originalRequestFieldName);
-        Poco::RegularExpression("<<OriginalRequestValue>>").subst(msg, request.getURI());
+        Poco::RegularExpression("<<OriginalRequestValue>>").subst(msg, request.getRequestTarget());
 
         response.setBody(msg);
     };

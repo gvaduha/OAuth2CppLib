@@ -202,10 +202,12 @@ string StandardAuthorizationServerPolicies::getCallbackUri(const Client &client)
 
 ServiceLocator::ServiceList * ServiceLocator::_impl = NULL;
 
-ServiceLocator::ServiceList::ServiceList(IUserAuthenticationFacade *uauthn, IClientAuthorizationFacade *cauthz, IClientAuthenticationFacade *cauthn,
-    IAuthorizationCodeGenerator *authcodegen, IAuthorizationServerStorage *storage, IAuthorizationServerPolicies *policies)
-    : UserAuthN(uauthn), ClientAuthZ(cauthz), ClientAuthN(cauthn), AuthCodeGen(authcodegen),
-    Storage(storage), AuthorizationServerPolicies(policies)
+ServiceLocator::ServiceList::ServiceList(IUserAuthenticationFacade *uauthn, IClientAuthorizationFacade *cauthz, IClientAuthenticationFacade *cauthn
+    , IAuthorizationCodeManager *acmngr, IAccessTokenGenerator *atgen, IRefreshTokenGenerator * rtgen
+    , IAuthorizationServerStorage *storage, IAuthorizationServerPolicies *policies, IUriHelperFactory *urihelperfac)
+    : UserAuthN(uauthn), ClientAuthZ(cauthz), ClientAuthN(cauthn), AuthCodeManager(acmngr)
+    , AccessTokenGenerator(atgen), RefreshTokenGenerator(rtgen), Storage(storage), AuthorizationServerPolicies(policies)
+    , UriHelperFactory(urihelperfac)
 {
 }
 
@@ -214,16 +216,20 @@ ServiceLocator::ServiceList::~ServiceList()
     delete UserAuthN;
     delete ClientAuthZ;
     delete ClientAuthN;
-    delete AuthCodeGen;
+    delete AuthCodeManager;
+    delete AccessTokenGenerator;
+    delete RefreshTokenGenerator;
     delete Storage;
     delete AuthorizationServerPolicies;
+    delete UriHelperFactory;
 }
 
 //FRAGILE CODE: Should be revised every time ServiceList changed!
 bool ServiceLocator::ServiceList::hasNullPtrs()
 {
-    if (!this->AuthCodeGen ||  !this->AuthorizationServerPolicies || !this->ClientAuthN
-        || !this->ClientAuthZ || !this->Storage || !this->UserAuthN
+    if (!this->AuthCodeManager ||  !this->AuthorizationServerPolicies || !this->ClientAuthN
+        || !this->ClientAuthZ || !this->AccessTokenGenerator || !this->RefreshTokenGenerator || !this->Storage
+        || !this->UserAuthN || !this->UriHelperFactory
         )
         return true;
     else

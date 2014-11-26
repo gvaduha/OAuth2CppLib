@@ -23,7 +23,7 @@ public:
     //use implementation of vector
     //Scope(const Scope &rhs);
     //Scope & operator=(const Scope &rhs);
-    string toString() const;
+    string str() const;
     bool operator==(const Scope &scope) const;
     bool operator==(const string &scopeStr) const;
     Scope getOuterScopeOf(const Scope &scope) const;
@@ -60,7 +60,7 @@ struct Client
     Client(clientid_t id, Type type, string secret, string redirectUri, Scope scope);
 
     bool empty();
-    string toString() const;
+    string str() const;
     Client & operator=(const Client &rhs);
     void swap(Client &rhs);
 };
@@ -83,7 +83,7 @@ struct Grant
     bool operator==(const Grant &rhs) const;
     // When scope of grant passed as parameter is subscope of the grant, we could legaly use such grant to access resources
     bool isSubGrant(const Grant &rhs) const;
-    string toString() const;      
+    string str() const;      
     void swap(Grant &rhs);
 };
 

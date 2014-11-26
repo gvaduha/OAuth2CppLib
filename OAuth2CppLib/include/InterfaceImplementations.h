@@ -45,17 +45,40 @@ public:
 
 // Save generate and save code in memory storage
 // RFC6749 4.1.3
-class SimpleAuthorizationCodeGenerator : public IAuthorizationCodeGenerator
+class SimpleAuthorizationCodeManager : public IAuthorizationCodeManager
 {
 private:
     map<string,string> _codes;
 
 public:
-    SimpleAuthorizationCodeGenerator();
+    SimpleAuthorizationCodeManager();
     virtual string generateAuthorizationCode(const Grant &grant, string &requestUri);
     virtual bool checkAndRemoveAuthorizationCode(const string &code, Grant &grant, string &requestUri);
     virtual void removeExpiredCodes();
-    virtual ~SimpleAuthorizationCodeGenerator();
+    virtual ~SimpleAuthorizationCodeManager();
+};
+
+class OpaqueStringAccessTokenGenerator : public IAccessTokenGenerator
+{
+    time_t _tokenExpire;
+    unsigned int _tokenLength;
+public:
+    OpaqueStringAccessTokenGenerator(time_t tokenExpire, unsigned int tokenLength = 42)
+        : _tokenExpire(tokenExpire), _tokenLength(tokenLength)
+    {};
+    virtual Token generate(const Grant &grant, const string &type) const;
+    virtual ~OpaqueStringAccessTokenGenerator(){};
+};
+
+class OpaqueStringRefreshTokenGenerator : public IRefreshTokenGenerator
+{
+    unsigned int _tokenLength;
+public:
+    OpaqueStringRefreshTokenGenerator(unsigned int tokenLength = 88)
+        : _tokenLength(tokenLength)
+    {};
+    virtual string generate(const Client &client) const;
+    virtual ~OpaqueStringRefreshTokenGenerator(){};
 };
 
 };

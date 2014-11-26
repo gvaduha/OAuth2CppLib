@@ -5,6 +5,7 @@
 #include <SimpleMemoryStorage.hpp>
 
 #include "Mocks.h"
+#include "PocoHttpAdapters.h"
 
 class NaiveHasher
 {
@@ -12,7 +13,7 @@ public:
     template <typename T>
     static OAuth2::string hash(const T &obj)
     {
-        return obj.toString();
+        return obj.str();
     };
 };
 
@@ -55,7 +56,7 @@ void initializeServiceLocator()
     IAuthorizationServerPolicies *policies = new StandardAuthorizationServerPolicies();
     IUserAuthenticationFacade *uauthn = new UserAuthenticationFacadeMock("User123",true);
     IClientAuthorizationFacade *cauthz = new DefaultClientAuthorizationFacade(authzPageBody);
-    IAuthorizationCodeGenerator *authcodegen = new SimpleAuthorizationCodeGenerator();
+    IAuthorizationCodeManager *AuthCodeManager = new SimpleAuthorizationCodeManager();
     IClientAuthenticationFacade *cauthn = new RequestParameterClientAuthenticationFacade();
     
     SimpleMemoryStorage<NaiveHasher> *pMemStorage = new SimpleMemoryStorage<NaiveHasher>();
@@ -65,6 +66,12 @@ void initializeServiceLocator()
     pMemStorage->createClient( Client("01234",Client::Type::publik,"abc","",Scope("one two three four")) );
     pMemStorage->createClient( Client("ClientID",Client::Type::confedential,"xSecreTx","http://localhost/IbTest/hs/client/oauth"/*"https://www.getpostman.com/oauth2/callback"*/,Scope("basic xxx private email")) );
 
-    ServiceLocator::ServiceList *list = new ServiceLocator::ServiceList(uauthn, cauthz, cauthn, authcodegen, pMemStorage, policies);
+    pMemStorage->addUri("/resource", Scope("email profile"));
+    pMemStorage->addUri("/email", Scope("email"));
+    pMemStorage->addUri("/xxx", Scope("ñ++"));
+
+    ServiceLocator::ServiceList *list = new ServiceLocator::ServiceList(uauthn, cauthz, cauthn, AuthCodeManager,
+        new OpaqueStringAccessTokenGenerator(3600), new OpaqueStringRefreshTokenGenerator(),
+        pMemStorage, policies, new PocoUriAdapterFactory());
     ServiceLocator::init(list);
 }

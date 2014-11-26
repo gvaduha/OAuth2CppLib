@@ -58,7 +58,7 @@ void Scope::CleanValuesFromReservedSymbols()
             *this));
 };
 
-string Scope::toString() const
+string Scope::str() const
 {
     std::stringstream  ss;
     copy(this->begin(), this->end(), std::ostream_iterator<string>(ss, " "));
@@ -125,10 +125,10 @@ bool Client::empty()
     return id == EmptyClientId;
 }
 
-string Client::toString() const
+string Client::str() const
 {
     std::stringstream  ss;
-    ss << id << ":" << type << ":" << secret << ":" << redirectUri << ":" << scope.toString();
+    ss << id << ":" << type << ":" << secret << ":" << redirectUri << ":" << scope.str();
     return ss.str();
 }
 
@@ -184,10 +184,10 @@ bool Grant::isSubGrant(const Grant &rhs) const
         && rhs.scope.isSubscopeOf(scope);
 }
 
-string Grant::toString() const
+string Grant::str() const
 {
     std::stringstream  ss;
-    ss << userId << ":" << clientId << ":" << scope.toString();
+    ss << userId << ":" << clientId << ":" << scope.str();
     return ss.str();
 }
         

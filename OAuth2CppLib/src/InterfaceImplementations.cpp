@@ -39,10 +39,10 @@ void DefaultClientAuthorizationFacade::makeAuthorizationRequestPage(const Grant 
 
     //HACK: <<CONST>> should be moved to static const; clientId, scope, userId should be moved to <<params>> instead of text
     std::ostringstream ostr;
-    ostr << "Client '" << grant.clientId << "' requested access to '" << grant.scope.toString() << "' for logged user " << grant.userId;
+    ostr << "Client '" << grant.clientId << "' requested access to '" << grant.scope.str() << "' for logged user " << grant.userId;
 
     msg = std::regex_replace(msg, std::regex("<<Text>>"), ostr.str());
-    msg = std::regex_replace(msg, std::regex("<<Action>>"), request.getURI()); //HACK: We don't need parameters consider using getHost+getPath
+    msg = std::regex_replace(msg, std::regex("<<Action>>"), request.getRequestTarget()); //HACK: We don't need parameters consider using getHost+getPath
 
     // copy all request parameters to hidden form fields
     ostr.str("");
@@ -92,23 +92,23 @@ DefaultClientAuthorizationFacade::~DefaultClientAuthorizationFacade()
 }
 
 
-// ----- SimpleAuthorizationCodeGenerator -----
+// ----- SimpleAuthorizationCodeManager -----
 
-SimpleAuthorizationCodeGenerator::SimpleAuthorizationCodeGenerator()
+SimpleAuthorizationCodeManager::SimpleAuthorizationCodeManager()
 {
     srand(static_cast<unsigned int>(std::time(NULL))); //HACK: "random" sequence is 41, 
 }
 
-string SimpleAuthorizationCodeGenerator::generateAuthorizationCode(const Grant &grant, string &requestUri)
+string SimpleAuthorizationCodeManager::generateAuthorizationCode(const Grant &grant, string &requestUri)
 {
     std::ostringstream oss;
-    oss << grant.userId << "`" << grant.clientId << "`" << grant.scope.toString() << "`" << requestUri << "`";
+    oss << grant.userId << "`" << grant.clientId << "`" << grant.scope.str() << "`" << requestUri << "`";
     string code = std::to_string(std::rand());
     _codes[code] = oss.str();
     return code;
 }
 
-bool SimpleAuthorizationCodeGenerator::checkAndRemoveAuthorizationCode(const string &code, Grant &grant, string &requestUri)
+bool SimpleAuthorizationCodeManager::checkAndRemoveAuthorizationCode(const string &code, Grant &grant, string &requestUri)
 {
     if (_codes.find(code) == _codes.end()) return false;
 
@@ -130,12 +130,41 @@ bool SimpleAuthorizationCodeGenerator::checkAndRemoveAuthorizationCode(const str
     return true;
 }
 
-void SimpleAuthorizationCodeGenerator::removeExpiredCodes()
+void SimpleAuthorizationCodeManager::removeExpiredCodes()
 {
 }
 
-SimpleAuthorizationCodeGenerator::~SimpleAuthorizationCodeGenerator()
+SimpleAuthorizationCodeManager::~SimpleAuthorizationCodeManager()
 {
+}
+
+
+// ----- Token generators -----
+
+string generateOpaqueString(unsigned int length)
+{
+    std::ostringstream oss;
+
+    static const char alphanum[] =
+        "0123456789"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz";
+
+    for (unsigned int i = 0; i < length; ++i)
+        oss << alphanum[rand() % (sizeof(alphanum) - 1)]; //HACK: rand()!
+
+    return oss.str();
+}
+
+Token OpaqueStringAccessTokenGenerator::generate(const Grant &grant, const string &type) const
+{
+    return Token(generateOpaqueString(_tokenLength), type, _tokenExpire);
+}
+
+//HACK: Hardcode
+string OpaqueStringRefreshTokenGenerator::generate(const Client &client) const
+{
+    return generateOpaqueString(_tokenLength);
 }
 
 };

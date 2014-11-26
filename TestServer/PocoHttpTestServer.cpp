@@ -89,12 +89,18 @@ protected:
     {
 		Application::instance().logger().information("R: Resource request");
 
-        string tmp = rq.getHeader("Authorization");
+        string token = rq.getHeader("Authorization");
+        string error;
 
-        if (!OAuth2::TokenValidator::canProcessRequest(tmp, rq, rs))
+        OAuth2::Errors::Code result = OAuth2::TokenValidator::validateToken(token, rq.getRequestTarget(), error);
+
+        if (OAuth2::Errors::Code::ok != result)
+        {
+            OAuth2::make_error_response(result, error, rq, rs);
             return;
+        }
 
-        rs.setBody("Access to " + rq.getURI() + " granted with " + tmp);
+        rs.setBody("Access to " + rq.getRequestTarget() + " granted with " + token);
     }
 };
 
