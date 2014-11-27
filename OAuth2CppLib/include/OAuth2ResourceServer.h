@@ -25,7 +25,7 @@ public:
 
         const ServiceLocator::ServiceList *sl = ServiceLocator::instance();
 
-        Grant grant = sl->Storage->getGrant(parts[1]);
+        Grant grant = sl->Storage->getGrantByToken(parts[1]);
 
         if (grant.empty())
         {

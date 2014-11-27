@@ -120,14 +120,14 @@ public:
         IClientAuthorizationFacade *ClientAuthZ;
         IClientAuthenticationFacade *ClientAuthN;
         IAuthorizationCodeManager *AuthCodeManager;
-        IAccessTokenGenerator *AccessTokenGenerator;
-        IRefreshTokenGenerator * RefreshTokenGenerator;
+        ITokenGenerator *AccessTokenGenerator;
+        ITokenGenerator * RefreshTokenGenerator;
         IAuthorizationServerStorage *Storage;
         IAuthorizationServerPolicies *AuthorizationServerPolicies;
         IUriHelperFactory *UriHelperFactory;
 
         ServiceList(IUserAuthenticationFacade *uauthn, IClientAuthorizationFacade *cauthz, IClientAuthenticationFacade *cauthn
-            , IAuthorizationCodeManager *AuthCodeManager, IAccessTokenGenerator *AccessTokenGenerator, IRefreshTokenGenerator * RefreshTokenGenerator
+            , IAuthorizationCodeManager *AuthCodeManager, ITokenGenerator *AccessTokenGenerator, ITokenGenerator * RefreshTokenGenerator
             , IAuthorizationServerStorage *storage, IAuthorizationServerPolicies *policies, IUriHelperFactory *urihelperfac);
 
         friend class ServiceLocator;

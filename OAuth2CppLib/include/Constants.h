@@ -18,6 +18,7 @@ namespace AuthorizationEndpointResponseType
 namespace TokenEndpointGrantType
 {
     OAUTH_STRING_CONST(authorization_code);
+    OAUTH_STRING_CONST(refresh_token);
 };
 
 namespace Params

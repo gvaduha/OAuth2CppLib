@@ -3,6 +3,7 @@
 #include <AuthorizationCodeGrant.h>
 #include <InterfaceImplementations.h>
 #include <SimpleMemoryStorage.hpp>
+#include <RefreshTokenProcessor.h>
 
 #include "Mocks.h"
 #include "PocoHttpAdapters.h"
@@ -35,6 +36,7 @@ OAuth2::AuthorizationServer * createAuth2Server()
     ServerEndpoint::RequestProcessorsQueueType tokenRequestProcessors;
     
     tokenRequestProcessors.push_back(new AuthorizationCodeGrant::TokenRequestProcessor());
+    tokenRequestProcessors.push_back(new RefreshTokenRequestProcessor());
     
     ServerEndpoint* tokenep = new ServerEndpoint(tokenRequestFilters, tokenRequestProcessors, tokenResponseFilters);
     
@@ -61,9 +63,9 @@ void initializeServiceLocator()
     
     SimpleMemoryStorage<NaiveHasher> *pMemStorage = new SimpleMemoryStorage<NaiveHasher>();
 
-    pMemStorage->initScopes("email profile xxx basic private c++ c\"\\  ");
+    pMemStorage->initScopes("email profile xxx basic private c++ c\"\\ one two ");
 
-    pMemStorage->createClient( Client("01234",Client::Type::publik,"abc","",Scope("one two three four")) );
+    pMemStorage->createClient( Client("01234",Client::Type::publik,"abcsecret","http://localhost/IbTest/hs/client/oauth",Scope("one email two")) );
     pMemStorage->createClient( Client("ClientID",Client::Type::confedential,"xSecreTx","http://localhost/IbTest/hs/client/oauth"/*"https://www.getpostman.com/oauth2/callback"*/,Scope("basic xxx private email")) );
 
     pMemStorage->addUri("/resource", Scope("email profile"));
@@ -71,7 +73,7 @@ void initializeServiceLocator()
     pMemStorage->addUri("/xxx", Scope("ñ++"));
 
     ServiceLocator::ServiceList *list = new ServiceLocator::ServiceList(uauthn, cauthz, cauthn, AuthCodeManager,
-        new OpaqueStringAccessTokenGenerator(3600), new OpaqueStringRefreshTokenGenerator(),
+        new OpaqueStringAccessTokenGenerator(3600), new OpaqueStringAccessTokenGenerator(0,88),
         pMemStorage, policies, new PocoUriAdapterFactory());
     ServiceLocator::init(list);
 }

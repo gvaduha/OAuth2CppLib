@@ -25,24 +25,21 @@ namespace OAuth2
 //    
 
 // Serve on Token Endpoint for refresh access tokens
-class RefreshTokenProcessor : public IRequestProcessor
+class RefreshTokenRequestProcessor : public IRequestProcessor
 {
-public:
-    RefreshTokenProcessor()
-    {};
+    const unsigned int _maxRefreshRequestBeforeTokenReissue;
 
-    virtual ~RefreshTokenProcessor() {};
+public:
+    RefreshTokenRequestProcessor();
+    virtual ~RefreshTokenRequestProcessor();
 
     virtual bool canProcessRequest(const IHttpRequest &request) const;
     virtual Errors::Code processRequest(const IHttpRequest &request, IHttpResponse &response) const;
     virtual bool validateParameters(const IHttpRequest &request, string &error) const;
 
-protected:
-    virtual std::map<string,string> materializeTokenBundle(const Grant &grant) const;
-
 private:
-    Errors::Code checkScope(const IHttpRequest &request, IHttpResponse &response, const Scope &clientScope, Scope &scope) const;
-    void makeNewTokensResponse(const authcode_t &code, const string redirect_uri, const IHttpRequest &request, IHttpResponse &response) const;
+    void makeTokenResponse(const std::map<string,string> &tokenBundle, const IHttpRequest &request, IHttpResponse &response) const;
+    std::map<string,string> materializeTokenBundle(const Grant &grant, bool issueNewRefreshToken) const;
 };
 
 };// namespace OAuth2

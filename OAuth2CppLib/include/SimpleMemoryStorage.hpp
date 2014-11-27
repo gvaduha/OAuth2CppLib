@@ -20,11 +20,12 @@ private:
     mutable map<clientid_t, Client> _clients; // <ClientId, Client>
     vector<string> _scopes; // <Scope>
     map<string, Scope> _uris; // <URI, vector<Scope> >
-    map<string, Grant> _grants; // <hash(Grant), Grant>
+    mutable map<string, Grant> _grants; // <hash(Grant), Grant>
     map<string, string> _tokens; // <Token, hash(Grant)>
+    map<string, clientid_t> _refreshTokens; // <refreshToken, hash(Grant)>
 
 public:
-    Client getClient(const clientid_t &id) const
+    virtual Client getClient(const clientid_t &id) const
     {
         if (_clients.find(id) != _clients.end())
             return _clients[id];
@@ -32,7 +33,15 @@ public:
             return Client::EmptyClient;
     }
 
-    Grant getGrant(const string &token) const
+    virtual Grant getGrant(const string &hash) const
+    {
+        if (_grants.find(hash) != _grants.end())
+            return _grants[hash];
+        else
+            return Grant::EmptyGrant;
+    }
+
+    virtual Grant getGrantByToken(const string &token) const
     {
         map<string,string>::const_iterator tit = _tokens.find(token);
         if ( tit != _tokens.end())
@@ -48,7 +57,7 @@ public:
             return Grant::EmptyGrant;
     }
 
-    bool isScopeExist(const Scope &scope, string &unknownScope) const
+    virtual bool isScopeExist(const Scope &scope, string &unknownScope) const
     {
         if (scope.empty() || _scopes.empty())
             return false;
@@ -67,7 +76,7 @@ public:
         return tmp.size() == 0;
     }
 
-    bool isUriInScope(const string &uri, const Scope &scope) const
+    virtual bool isUriInScope(const string &uri, const Scope &scope) const
     {
         map<string, Scope>::const_iterator it = _uris.find(uri);
 
@@ -81,25 +90,39 @@ public:
         return tmp.size() > 0;
     }
 
-    void saveGrant(const Grant &grant)
+    virtual void saveGrant(const Grant &grant)
     {
         _grants[HASHER::hash(grant)] = grant;
     }
 
-    bool isGrantExist(const Grant &grant) const
+    virtual bool isGrantExist(const Grant &grant) const
     {
         return _grants.find(HASHER::hash(grant)) != _grants.end() ? true : false;
     }
     
-    void saveToken(const Grant &grant, const Token &token)
+    virtual void saveToken(const Grant &grant, const Token &token)
     {
         _tokens[token.value] = HASHER::hash(grant);
     }
     
-    void saveRefreshToken(const clientid_t &cid, const string &token)
+    virtual void saveRefreshToken(const string &refreshToken,const Grant &grant)
     {
-        //HACK: Implement RefreshToken save
-        //throw std::exception("Implement RefreshToken save");
+        _refreshTokens[refreshToken] = HASHER::hash(grant);
+    }
+    
+    virtual void removeRefreshToken(const string &refreshToken)
+    {
+        _refreshTokens.erase(refreshToken);
+    }
+
+    virtual Grant getGrantByTokenByRefreshToken(const string &refreshToken) const
+    {
+        map<string, clientid_t>::const_iterator it = _refreshTokens.find(refreshToken);
+
+        if (it == _refreshTokens.end())
+            return Grant::EmptyGrant;
+
+        return getGrant(it->second);
     }
 
     //non-interface helpers part

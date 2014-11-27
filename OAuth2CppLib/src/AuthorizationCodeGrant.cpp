@@ -1,4 +1,4 @@
-﻿#include <assert.h>
+﻿#include <cassert>
 #include "AuthorizationCodeGrant.h"
 #include "Helpers.h"
 #include <sstream>
@@ -9,8 +9,6 @@ namespace OAuth2
 namespace AuthorizationCodeGrant
 {
 
-    using namespace Helpers;
-
 bool CodeRequestProcessor::canProcessRequest(const IHttpRequest &request) const
 {
     return request.getParam(Params::response_type) == AuthorizationEndpointResponseType::code;
@@ -18,9 +16,10 @@ bool CodeRequestProcessor::canProcessRequest(const IHttpRequest &request) const
 
 bool CodeRequestProcessor::validateParameters(const IHttpRequest &request, string &error) const
 {
-    if (!request.isParamExist(Params::response_type) || !request.isParamExist(Params::client_id))
+    // No reason to check response_type as it is already used in canProcessRequest
+    if (!request.isParamExist(Params::client_id))
     {
-        error = "one of required parameters missing: response_type, client_id";
+        error = "required parameter missing: client_id";
         return false;
     }
 
@@ -29,7 +28,8 @@ bool CodeRequestProcessor::validateParameters(const IHttpRequest &request, strin
 
 // Check scope from request against client's scope
 // Return scope along with Errors::ok or Error and response contained error reply
-Errors::Code CodeRequestProcessor::checkScope(const IHttpRequest &request, IHttpResponse &response, const Scope &clientScope, Scope &scope) const
+// Be carefull not to swap scope parameters!
+Errors::Code CodeRequestProcessor::checkScope(const Scope &clientScope, Scope &scope, const IHttpRequest &request, IHttpResponse &response) const
 {
     // scope is OPTIONAL parameter by RFC, but should be in request OR registered with client
     // so we could
@@ -125,7 +125,7 @@ Errors::Code CodeRequestProcessor::processRequest(const IHttpRequest &request, I
     }
 
     Scope scope;
-    Errors::Code res = checkScope(request, response, client.scope, scope);
+    Errors::Code res = checkScope(client.scope, scope, request, response);
 
     if (Errors::ok != res)
         return res;
@@ -185,8 +185,7 @@ std::map<string,string> CodeRequestProcessor::materializeTokenBundle(const Grant
     throw std::exception("CodeRequestProcessor::materialize not implemented");
 }
 
-//
-/////////////// TokenRequestProcessor Begin Implementation /////////////////
+// ----- TokenRequestProcessor -----
 //
 bool TokenRequestProcessor::canProcessRequest(const IHttpRequest & request) const
 {
@@ -195,9 +194,10 @@ bool TokenRequestProcessor::canProcessRequest(const IHttpRequest & request) cons
 
 bool TokenRequestProcessor::validateParameters(const IHttpRequest &request, string &error) const
 {
-    if (!request.isParamExist(Params::grant_type) || !request.isParamExist(Params::client_id) || !request.isParamExist(Params::code))
+    // No reason to check grant_type as it is already used in canProcessRequest
+    if (!request.isParamExist(Params::client_id) || !request.isParamExist(Params::code))
     {
-        error = "one of required parameters missing: grant_type, client_id, code";
+        error = "one of required parameters missing: client_id, code";
         return false;
     }
 
@@ -208,10 +208,14 @@ Errors::Code TokenRequestProcessor::processRequest(const IHttpRequest &request, 
 {
     const ServiceLocator::ServiceList *sl = ServiceLocator::instance();
 
-    //HACK: If the client type is confidential or the client was issued client
+    clientid_t cid = static_cast<clientid_t>(request.getParam(Params::client_id));
+    Client c = ServiceLocator::instance()->Storage->getClient(cid);
+
+    // If the client type is confidential or the client was issued client
     // credentials (or assigned other authentication requirements), the
-    // client MUST authenticate with the authorization server
-    Client c = sl->ClientAuthN->authenticateClient(request);
+    // client MUST authenticate with the authorization server (https://tools.ietf.org/html/rfc6749#section-4.1.3)
+    if ( (!c.empty() && c.type == Client::Type::confedential) || sl->ClientAuthN->hasClientCredentials(request))
+        Client c = sl->ClientAuthN->authenticateClient(request);
 
     if (c.empty())
     {
@@ -248,7 +252,7 @@ void TokenRequestProcessor::makeTokenResponse(const std::map<string,string> &tok
     response.addHeader("Pragma","no-cache");
 
     //HACK: JSON library now using boost
-    response.setBody(mapToJSON(tokenBundle));
+    response.setBody(Helpers::mapToJSON(tokenBundle));
     response.setStatus(200);
 };
 
@@ -261,9 +265,8 @@ std::map<string,string> TokenRequestProcessor::materializeTokenBundle(const Gran
     sl->Storage->saveToken(grant, aT);
 
     // Create and save refresh token
-    Client c = sl->Storage->getClient(grant.clientId);
-    string rT = sl->RefreshTokenGenerator->generate(c);
-    sl->Storage->saveRefreshToken(grant.clientId, rT);
+    Token rT = sl->RefreshTokenGenerator->generate(grant);
+    sl->Storage->saveRefreshToken(rT.value, grant);
 
     // Create and return key-value map for response
     std::map<string,string> map;
@@ -275,7 +278,7 @@ std::map<string,string> TokenRequestProcessor::materializeTokenBundle(const Gran
     map.insert(strpair_t(Params::access_token, aT.value));
     map.insert(strpair_t(Params::token_type, aT.type));
     map.insert(strpair_t(Params::expires_in, ss.str()));
-    map.insert(strpair_t(Params::refresh_token, rT));
+    map.insert(strpair_t(Params::refresh_token, rT.value));
 
     return map;
 }

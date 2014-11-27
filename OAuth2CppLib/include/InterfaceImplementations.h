@@ -19,6 +19,7 @@ namespace OAuth2
 class RequestParameterClientAuthenticationFacade : public IClientAuthenticationFacade
 {
 public:
+    virtual bool hasClientCredentials(const IHttpRequest &request) const;
     virtual Client authenticateClient(const IHttpRequest &request) const;
     virtual ~RequestParameterClientAuthenticationFacade(){};
 };
@@ -58,7 +59,7 @@ public:
     virtual ~SimpleAuthorizationCodeManager();
 };
 
-class OpaqueStringAccessTokenGenerator : public IAccessTokenGenerator
+class OpaqueStringAccessTokenGenerator : public ITokenGenerator
 {
     time_t _tokenExpire;
     unsigned int _tokenLength;
@@ -68,17 +69,6 @@ public:
     {};
     virtual Token generate(const Grant &grant) const;
     virtual ~OpaqueStringAccessTokenGenerator(){};
-};
-
-class OpaqueStringRefreshTokenGenerator : public IRefreshTokenGenerator
-{
-    unsigned int _tokenLength;
-public:
-    OpaqueStringRefreshTokenGenerator(unsigned int tokenLength = 88)
-        : _tokenLength(tokenLength)
-    {};
-    virtual string generate(const Client &client) const;
-    virtual ~OpaqueStringRefreshTokenGenerator(){};
 };
 
 };

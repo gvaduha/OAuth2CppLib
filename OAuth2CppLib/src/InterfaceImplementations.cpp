@@ -10,6 +10,14 @@ const string DefaultClientAuthorizationFacade::_userIdFieldName = "user_id";
 
 // ----- RequestParameterClientAuthenticationFacade ------
 
+bool RequestParameterClientAuthenticationFacade::hasClientCredentials(const IHttpRequest &request) const
+{
+    clientid_t cid = static_cast<clientid_t>(request.getParam(Params::client_id));
+    string secret = request.getParam(Params::client_secret);
+
+    return ! (cid.empty() || secret.empty());
+}
+
 Client RequestParameterClientAuthenticationFacade::authenticateClient(const IHttpRequest &request) const
 {
     clientid_t cid = static_cast<clientid_t>(request.getParam(Params::client_id));
@@ -159,12 +167,6 @@ string generateOpaqueString(unsigned int length)
 Token OpaqueStringAccessTokenGenerator::generate(const Grant &grant) const
 {
     return Token(generateOpaqueString(_tokenLength), "Bearer", _tokenExpire);
-}
-
-//HACK: Hardcode
-string OpaqueStringRefreshTokenGenerator::generate(const Client &client) const
-{
-    return generateOpaqueString(_tokenLength);
 }
 
 };

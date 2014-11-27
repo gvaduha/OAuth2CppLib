@@ -65,12 +65,10 @@ public:
     virtual Errors::Code processRequest(const IHttpRequest &request, IHttpResponse &response) const;
     virtual bool validateParameters(const IHttpRequest &request, string &error) const;
 
-protected:
-    virtual std::map<string,string> materializeTokenBundle(const Grant &grant) const;
-
 private:
-    Errors::Code checkScope(const IHttpRequest &request, IHttpResponse &response, const Scope &clientScope, Scope &scope) const;
+    Errors::Code checkScope(const Scope &clientScope, Scope &scope, const IHttpRequest &request, IHttpResponse &response) const;
     void makeAuthCodeResponse(const authcode_t &code, const string redirect_uri, const IHttpRequest &request, IHttpResponse &response) const;
+    std::map<string,string> materializeTokenBundle(const Grant &grant) const;
 };
 
 // Serve on Token Endpoint for code <-> token exchange requests
@@ -84,10 +82,8 @@ public:
     virtual Errors::Code processRequest(const IHttpRequest &request, IHttpResponse &response) const;
     virtual bool validateParameters(const IHttpRequest &request, string &error) const;
 
-protected:
-    virtual std::map<string,string> materializeTokenBundle(const Grant &grant) const;
-
 private:
+    std::map<string,string> materializeTokenBundle(const Grant &grant) const;
     void makeTokenResponse(const std::map<string,string> &tokenBundle, const IHttpRequest &request, IHttpResponse &response) const;
 };
 

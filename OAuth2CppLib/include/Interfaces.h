@@ -97,6 +97,8 @@ public:
     // Gets client's credentials from request and return clientId if authorized, else return EmptyClientIdId
     // Check existance of record for client with credentials from request in AS store
     virtual Client authenticateClient(const IHttpRequest &request) const = 0; //NO_THROW
+    // Check that request has client credentials
+    virtual bool hasClientCredentials(const IHttpRequest &request) const = 0;
     virtual ~IClientAuthenticationFacade(){};
 };
 
@@ -151,11 +153,7 @@ public:
     virtual Errors::Code processRequest(const IHttpRequest &request, IHttpResponse &response) const = 0;
     // Validate all RFC REQUIRED request parameters
     virtual bool validateParameters(const IHttpRequest &request, string &error) const = 0;
-protected:
-    // Create token bundle depending on the type of process. Should save tokens to store, no one else could do it correctly!
-    // Return map of key values for JSON token response (example in https://tools.ietf.org/html/rfc6749#section-4.1.4)
-    virtual std::map<string,string> materializeTokenBundle(const Grant &grant) const = 0;
-public:
+
     virtual ~IRequestProcessor(){};
 };
 
@@ -176,20 +174,11 @@ public:
 };
 
 // Generate tokens for given grant and type
-class IAccessTokenGenerator
+class ITokenGenerator
 {
 public:
     virtual Token generate(const Grant &grant) const = 0;
-    virtual ~IAccessTokenGenerator(){};
-};
-
-// Generate refresh tokens.
-// Full client object passed to external code to decide what to generate.
-class IRefreshTokenGenerator
-{
-public:
-    virtual string generate(const Client &client) const = 0;
-    virtual ~IRefreshTokenGenerator(){};
+    virtual ~ITokenGenerator(){};
 };
 
 // Generate codes for Authorization Code Grant Flow
@@ -237,14 +226,16 @@ class IAuthorizationServerStorage
 {
 public:
     virtual Client getClient(const clientid_t &id) const = 0;
-    virtual Grant getGrant(const string &token) const = 0;
+    virtual Grant getGrantByTokenByRefreshToken(const string &refreshToken) const = 0;
+    virtual Grant getGrantByToken(const string &token) const = 0;
     virtual void saveGrant(const Grant &grant) = 0;
     // Check grant existance in storage
     virtual bool isGrantExist(const Grant &grant) const = 0;
     //
     virtual void saveToken(const Grant &grant, const Token &token) = 0;
     //
-    virtual void saveRefreshToken(const clientid_t &cid, const string &token) = 0;
+    virtual void saveRefreshToken(const string &refreshToken, const Grant &grant) = 0;
+    virtual void removeRefreshToken(const string &refreshToken) = 0;
     // Check all scopes in Scope vector registered in store
     // unknownScope is return value for scopes isn't registered in storage
     virtual bool isScopeExist(const Scope &scope, string &unknownScope) const = 0;

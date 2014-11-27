@@ -208,7 +208,7 @@ string StandardAuthorizationServerPolicies::getCallbackUri(const Client &client)
 ServiceLocator::ServiceList * ServiceLocator::_impl = NULL;
 
 ServiceLocator::ServiceList::ServiceList(IUserAuthenticationFacade *uauthn, IClientAuthorizationFacade *cauthz, IClientAuthenticationFacade *cauthn
-    , IAuthorizationCodeManager *acmngr, IAccessTokenGenerator *atgen, IRefreshTokenGenerator * rtgen
+    , IAuthorizationCodeManager *acmngr, ITokenGenerator *atgen, ITokenGenerator * rtgen
     , IAuthorizationServerStorage *storage, IAuthorizationServerPolicies *policies, IUriHelperFactory *urihelperfac)
     : UserAuthN(uauthn), ClientAuthZ(cauthz), ClientAuthN(cauthn), AuthCodeManager(acmngr)
     , AccessTokenGenerator(atgen), RefreshTokenGenerator(rtgen), Storage(storage), AuthorizationServerPolicies(policies)
