@@ -58,7 +58,7 @@ void initializeServiceLocator()
     IAuthorizationServerPolicies *policies = new StandardAuthorizationServerPolicies(2);
     IUserAuthenticationFacade *uauthn = new UserAuthenticationFacadeMock("User123",true);
     IClientAuthorizationFacade *cauthz = new DefaultClientAuthorizationFacade(authzPageBody);
-    IAuthorizationCodeManager *AuthCodeManager = new SimpleAuthorizationCodeManager();
+    IAuthorizationCodeManager *AuthCodeManager = new SimpleAuthorizationCodeManager(14);
     IClientAuthenticationFacade *cauthn = new RequestParameterClientAuthenticationFacade();
     
     SimpleMemoryStorage<NaiveHasher> *pMemStorage = new SimpleMemoryStorage<NaiveHasher>();
@@ -66,7 +66,7 @@ void initializeServiceLocator()
     pMemStorage->initScopes("email profile xxx basic private c++ c\"\\ one two ");
 
     pMemStorage->createClient( Client("01234",Client::Type::publik,"abcsecret","http://localhost/IbTest/hs/client/oauth",Scope("one email two")) );
-    pMemStorage->createClient( Client("ClientID",Client::Type::confedential,"xSecreTx","http://localhost/IbTest/hs/client/oauth"/*"https://www.getpostman.com/oauth2/callback"*/,Scope("basic xxx private email")) );
+    pMemStorage->createClient( Client("ClientID",Client::Type::confedential,"xSecreTx",/*"http://localhost/IbTest/hs/client/oauth"*/"https://www.getpostman.com/oauth2/callback",Scope("basic xxx private email")) );
 
     pMemStorage->addUri("/resource", Scope("email profile"));
     pMemStorage->addUri("/email", Scope("email"));

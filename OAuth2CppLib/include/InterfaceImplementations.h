@@ -50,9 +50,10 @@ class SimpleAuthorizationCodeManager : public IAuthorizationCodeManager
 {
 private:
     map<string,string> _codes;
+    unsigned int _codeLength;
 
 public:
-    SimpleAuthorizationCodeManager();
+    SimpleAuthorizationCodeManager(unsigned int codeLength);
     virtual string generateAuthorizationCode(const Grant &grant, string &requestUri);
     virtual bool checkAndRemoveAuthorizationCode(const string &code, Grant &grant, string &requestUri);
     virtual void removeExpiredCodes();

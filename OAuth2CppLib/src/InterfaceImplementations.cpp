@@ -102,16 +102,31 @@ DefaultClientAuthorizationFacade::~DefaultClientAuthorizationFacade()
 
 // ----- SimpleAuthorizationCodeManager -----
 
-SimpleAuthorizationCodeManager::SimpleAuthorizationCodeManager()
+string generateOpaqueString(unsigned int length)
 {
-    srand(static_cast<unsigned int>(std::time(NULL))); //HACK: "random" sequence is 41, 
+    std::ostringstream oss;
+
+    static const char alphanum[] =
+        "0123456789"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz";
+
+    for (unsigned int i = 0; i < length; ++i)
+        oss << alphanum[rand() % (sizeof(alphanum) - 1)]; //HACK: rand()!
+
+    return oss.str();
+}
+
+SimpleAuthorizationCodeManager::SimpleAuthorizationCodeManager(unsigned int codeLength)
+    : _codeLength(codeLength)
+{
 }
 
 string SimpleAuthorizationCodeManager::generateAuthorizationCode(const Grant &grant, string &requestUri)
 {
     std::ostringstream oss;
     oss << grant.userId << "`" << grant.clientId << "`" << grant.scope.str() << "`" << requestUri << "`";
-    string code = std::to_string(std::rand());
+    string code = generateOpaqueString(_codeLength);
     _codes[code] = oss.str();
     return code;
 }
@@ -148,21 +163,6 @@ SimpleAuthorizationCodeManager::~SimpleAuthorizationCodeManager()
 
 
 // ----- Token generators -----
-
-string generateOpaqueString(unsigned int length)
-{
-    std::ostringstream oss;
-
-    static const char alphanum[] =
-        "0123456789"
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        "abcdefghijklmnopqrstuvwxyz";
-
-    for (unsigned int i = 0; i < length; ++i)
-        oss << alphanum[rand() % (sizeof(alphanum) - 1)]; //HACK: rand()!
-
-    return oss.str();
-}
 
 Token OpaqueStringAccessTokenGenerator::generate(const Grant &grant) const
 {
