@@ -1,4 +1,5 @@
 language: cpp
 solution: OAuth2CppLib.sln
-script:
-  - msbuild /p:Configuration=Release OAuth2CppLib.sln
+os: windows
+#script:
+#  - msbuild /p:Configuration=Release OAuth2CppLib.sln
